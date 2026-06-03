@@ -67,10 +67,13 @@ token_array_t * tokenizer(char * input_text){
 char * load_code(char * program){
   // This is placeholder code. Put code to actually read from file. 
   strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/++/;/}/EOF");
-  
+   
   
   return program;
 }
+
+
+
 
 int main(){
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader. 
