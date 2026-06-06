@@ -53,7 +53,7 @@ token_array_t * tokenizer(char * input_text){
     }
     else {
       tokenarray->capacity *= 2;
-      tokenarray->tokenarray_ptr=realloc(tokenarray->tokenarray_ptr, sizeof(sizeof(token_t)*tokenarray->capacity));     
+      tokenarray->tokenarray_ptr=realloc(tokenarray->tokenarray_ptr, (sizeof(token_t)*tokenarray->capacity));     
       continue;
     }
 
@@ -71,6 +71,10 @@ char * load_code(char * program){
   
   return program;
 }
+
+
+  
+
 
 
 
@@ -91,7 +95,7 @@ int main(){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
-    printf(" %s ", (tokenarray->tokenarray_ptr + i)->token);
+    printf("%s \n", (tokenarray->tokenarray_ptr + i)->token);
     
   };
   
