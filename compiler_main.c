@@ -20,7 +20,7 @@ i = 0;
 
 for (i<5){
 return(i);
-i ++;
+i = i + 1;
 }
 
 
@@ -29,8 +29,9 @@ Program in test_prog
 */
 
 #define punctuations ";:{}(),"
-#define a_operators "+-//*"
+#define a_operators "+-//*="
 #define keywords "if else return while" // 4 keywords. idc enough to deal with string arrays in C. 
+#define c_operators "< > ==" // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false. 
 #define l_operators "? ! | & " // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false. 
 // ? is just a joke not intended to be used really, unless you want to confuse a bunch of people by using non bool values in a logical operation 
 // intended use: 
@@ -91,43 +92,13 @@ token_array_t * tokenizer(char * input_text){
 
 char * load_code(char * program){
   // This is placeholder code. Put code to actually read from file. 
-  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/++/;/}/EOF");
+  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF");
   
   return program;
 }
 
 
-token_array_t * classifier(token_array_t * tokenarray){
-  // Basically the entire AST arch here and rest in process() func. written in a bunch of if statements. 
-  token_t * token_ptr;
-  char token_text[10];
 
-  for (int i; i < (tokenarray->length + 1); i++){
-    token_ptr = tokenarray->tokenarray_ptr + i;
-    strcpy(token_text, token_ptr->token);
-    
-    if (strstr(token_text, keywords )!=NULL){
-      token_ptr->type = KEYWORD;
-
-    }else if (strstr(token_text, a_operators)!=NULL) {
-      token_ptr->type = A_OPERATOR;
-    }else if (strstr(token_text, punctuations )!=NULL){
-      token_ptr->type = PUNCTUATION;
-    }else if (strstr(token_text, l_operators)!=NULL) {
-      token_ptr->type = L_OPERATOR;
-    }else if (strstr(token_text, c_operators)!=NULL) {
-      token_ptr->type = C_OPERATOR;
-    }else if (is_valid_int(token_ptr->token)) {
-      token_ptr->type = VALUE;
-    }else{
-      token_ptr->type = VARIABLE;
-    }
-
-
-
-  }
-
-}
 // AI GENERATED FUNCTION
 bool is_valid_int(const char *str, int *out_value) {
     // If the string is NULL or empty, it's not a valid int
@@ -159,7 +130,7 @@ bool is_valid_int(const char *str, int *out_value) {
     }
 
     // If we passed all checks, save the value and return true
-    *out_value = (int)val;
+    //*out_value = (int)val;
     return true;
 }
 
@@ -168,7 +139,39 @@ int process(token_array_t * tokenarray) {
    
 }
 
+token_array_t * classifier(token_array_t * tokenarray){
+  // Basically the entire AST arch here and rest in process() func. written in a bunch of if statements. 
+  token_t * token_ptr;
+  char token_text[10];
 
+  for (int i=0; i < (tokenarray->length + 1); i++){
+    token_ptr = tokenarray->tokenarray_ptr + i;
+    strcpy(token_text, token_ptr->token);
+//    printf("%d\n", i);
+//  printf("IN for loop \n");
+    if (strstr(keywords, token_text)!=NULL){
+      token_ptr->type = KEYWORD;
+
+    }else if (strstr(a_operators, token_text)!=NULL) {
+      token_ptr->type = A_OPERATOR;
+    }else if (strstr(punctuations, token_text )!=NULL){
+      token_ptr->type = PUNCTUATION;
+    }else if (strstr(l_operators,token_text)!=NULL) {
+      token_ptr->type = L_OPERATOR;
+    }else if (strstr(c_operators,token_text)!=NULL) {
+      token_ptr->type = C_OPERATOR;
+    }else if (is_valid_int(token_ptr->token, NULL)) {
+      token_ptr->type = VALUE;
+    }else{
+      token_ptr->type = VARIABLE;
+    }
+
+
+
+  }
+  return tokenarray;
+
+}
 
 
 
@@ -184,11 +187,12 @@ int main(){
   load_code(program);
   tokenarray = tokenizer(program);
   // For Debugging:
+  classifier(tokenarray);
   for (int i = 0; i < (tokenarray->length); i++){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
-    printf("%s \n", (tokenarray->tokenarray_ptr + i)->token);
+    printf("%s : %d \n", (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
     
   };
   
