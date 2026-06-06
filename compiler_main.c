@@ -40,7 +40,11 @@ Program in test_prog
 // in future if you have a variable getting a value from a func, you can use ?var_from_func to see if it has a value or not. 
 // i included it cuz it was mad funny. ;)
 
-
+// For data and variable assignment, we have address spaces:
+// 0x0000 to 0xFFF0. 
+// so, we use the last bunch to make sure the program doesn't overwrite itself. 
+// Or...... we could write the program with a placeholder address, and then at the end, we calculate how long our program is, and assign address spaces outside this length 
+// second method is preffered cuz we need to maintain variable list with registers anyways cuz variables will be called later on also. 
 
 typedef enum {
   VARIABLE = 10,
@@ -135,9 +139,6 @@ bool is_valid_int(const char *str, int *out_value) {
 }
 
 
-int process(token_array_t * tokenarray) {
-   
-}
 
 token_array_t * classifier(token_array_t * tokenarray){
   // Basically the entire AST arch here and rest in process() func. written in a bunch of if statements. 
@@ -165,15 +166,16 @@ token_array_t * classifier(token_array_t * tokenarray){
     }else{
       token_ptr->type = VARIABLE;
     }
-
-
-
   }
   return tokenarray;
 
 }
 
 
+
+int process(token_array_t * tokenarray) {
+     
+}
 
 int main(){
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader. 
