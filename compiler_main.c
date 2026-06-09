@@ -71,25 +71,6 @@ typedef struct TokenArray {
   token_t * tokenarray_ptr;
 }token_array_t;
 
-typedef struct ASTValue {
-  int isType; // 1 for AST 0 for real int and 2 for variable 
-  int value;
-  void * ptr;
-
-}ast_val_t;
-
-typedef struct ASTNode {
-  int op;
-  ast_val_t * ast_val_1;
-  ast_val_t * ast_val_2;
-}ast_node_t;
-
-typedef struct Variable {
-  int value;
-  char name[10];
-   
-}variable_t;
-
 
 
 
@@ -234,14 +215,6 @@ int find_deepest_brac(token_array_t * tokenarray){
 
 }
 
-
-ast_node_t * create_ast(token_array_t * tokenarray) {
-  // split into multiple token arrays, spliting at ; if and only if the bracket counter is at 0. if bracket counter is not zero, take the entire bracket as a tokenarray. then, when processing bracket, take each line as separate token array cuz then the bracket is gone. 
-  
-
-
-
-}
 
 
 int main(){
