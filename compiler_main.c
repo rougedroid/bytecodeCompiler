@@ -5,6 +5,17 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#define punctuations ";:{}(),"
+#define a_operators "+-//*="
+#define keywords "if else return while" // 4 keywords. idc enough to deal with string arrays in C. 
+#define c_operators "< > ==" // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false. 
+#define l_operators "? ! | & " // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false. 
+// ? is just a joke not intended to be used really, unless you want to confuse a bunch of people by using non bool values in a logical operation 
+// intended use: 
+// if (?10) -> 10 isn't a logical operator so if (10) would give error. but ?10 gives true.
+// if (?) will give false cuz ) is not a value. 
+// in future if you have a variable getting a value from a func, you can use ?var_from_func to see if it has a value or not. 
+// i included it cuz it was mad funny. ;)
 
 /*
 Goal: 
@@ -27,21 +38,12 @@ i = i + 1;
 Program in test_prog
 
 */
+// Rewrite code using while loop. 
 
-#define punctuations ";:{}(),"
-#define a_operators "+-//*="
-#define keywords "if else return while" // 4 keywords. idc enough to deal with string arrays in C. 
-#define c_operators "< > ==" // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false. 
-#define l_operators "? ! | & " // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false. 
-// ? is just a joke not intended to be used really, unless you want to confuse a bunch of people by using non bool values in a logical operation 
-// intended use: 
-// if (?10) -> 10 isn't a logical operator so if (10) would give error. but ?10 gives true.
-// if (?) will give false cuz ) is not a value. 
-// in future if you have a variable getting a value from a func, you can use ?var_from_func to see if it has a value or not. 
-// i included it cuz it was mad funny. ;)
+
 
 // For data and variable assignment, we have address spaces:
-// 0x0000 to 0xFFF0. 
+// 0               x0000 to 0xFFF0. 
 // so, we use the last bunch to make sure the program doesn't overwrite itself. 
 // Or...... we could write the program with a placeholder address, and then at the end, we calculate how long our program is, and assign address spaces outside this length 
 // second method is preffered cuz we need to maintain variable list with registers anyways cuz variables will be called later on also. 
@@ -54,6 +56,7 @@ typedef enum {
   L_OPERATOR = 22,
   C_OPERATOR = 23,
   PUNCTUATION = 30,
+  EOF_Flag = 69,
 }TokenTypes;
 
 typedef struct Token {
@@ -67,6 +70,28 @@ typedef struct TokenArray {
   int capacity;
   token_t * tokenarray_ptr;
 }token_array_t;
+
+typedef struct ASTValue {
+  int isType; // 1 for AST 0 for real int and 2 for variable 
+  int value;
+  void * ptr;
+
+}ast_val_t;
+
+typedef struct ASTNode {
+  int op;
+  ast_val_t * ast_val_1;
+  ast_val_t * ast_val_2;
+}ast_node_t;
+
+typedef struct Variable {
+  int value;
+  char name[10];
+   
+}variable_t;
+
+
+
 
 token_array_t * tokenizer(char * input_text){
   token_array_t * tokenarray = malloc(sizeof(token_array_t));
@@ -96,7 +121,7 @@ token_array_t * tokenizer(char * input_text){
 
 char * load_code(char * program){
   // This is placeholder code. Put code to actually read from file. 
-  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF");
+  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
   
   return program;
 }
@@ -163,6 +188,8 @@ token_array_t * classifier(token_array_t * tokenarray){
       token_ptr->type = C_OPERATOR;
     }else if (is_valid_int(token_ptr->token, NULL)) {
       token_ptr->type = VALUE;
+    }else if (strstr("EOF", token_text)!=NULL){
+      token_ptr->type = EOF_Flag;
     }else{
       token_ptr->type = VARIABLE;
     }
@@ -176,6 +203,46 @@ token_array_t * classifier(token_array_t * tokenarray){
 int process(token_array_t * tokenarray) {
      
 }
+
+int find_deepest_brac(token_array_t * tokenarray){
+  int deepest_brac = 0;
+  int live_counter = 0;
+  int highest = 0; 
+  int highest_i = 0;
+  token_t * root_token = tokenarray->tokenarray_ptr; 
+  token_t * cur_token;
+  for (int i = 0; i < tokenarray->length; i++){
+    cur_token = root_token + i;
+    if (cur_token->type ==  PUNCTUATION){
+      if (strstr(cur_token->token,"(")){
+        deepest_brac = i;
+        live_counter++;
+        if (live_counter > highest){
+          highest = live_counter;
+          highest_i = i;
+        }
+      }else if(strstr(cur_token->token,")")){
+        live_counter--;
+        
+      }
+
+
+    }
+  };
+  deepest_brac = highest_i; // Further additions for { need to be made
+  return deepest_brac;
+
+}
+
+
+ast_node_t * create_ast(token_array_t * tokenarray) {
+  // split into multiple token arrays, spliting at ; if and only if the bracket counter is at 0. if bracket counter is not zero, take the entire bracket as a tokenarray. then, when processing bracket, take each line as separate token array cuz then the bracket is gone. 
+  
+
+
+
+}
+
 
 int main(){
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader. 
@@ -194,8 +261,10 @@ int main(){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
-    printf("%s : %d \n", (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
+    printf("tokan: %d : %s : %d \n",i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
     
   };
+
+  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
   
 }
