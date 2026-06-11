@@ -72,6 +72,71 @@ typedef struct TokenArray {
 }token_array_t;
 
 
+typedef struct ASTNode {
+  int NodeType;
+  struct ASTNode * left;
+  struct ASTNode * right;
+  union {
+    int value;
+    int op;
+  }data;
+}ASTNode_t;
+
+typedef enum {
+  NODE_VALUE = 10,
+  NODE_OPERATOR = 11,
+}Node_Types;
+
+typedef struct ByteStream{
+  int length;
+  int capacity;
+  uint16_t * binstream;
+}ByteStream_t;
+
+uint16_t translate(ASTNode_t * rootNode){ //, ByteStream_t * outputstream){
+
+  uint16_t left_reg;
+  uint16_t right_reg;
+  uint16_t output_reg;
+  int op;
+  
+  output_reg = last_reg - used_reg_rev;
+  used_reg_rev+=2;
+
+  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType),output_reg, used_reg_rev);
+  if (rootNode->NodeType == NODE_VALUE){
+    //return (rootNode->data).value;
+    printf("WRITE_CONST_INT [%d] [%d] \n", output_reg, (rootNode->data).value);
+    
+    
+    
+  }else if(rootNode->NodeType == NODE_OPERATOR){
+    left_reg = translate(rootNode->left);
+    right_reg = translate(rootNode->right);
+    op = (rootNode->data).op;
+  }
+
+  switch (op) {
+    case OPR_ADD:
+      uint16_t result_reg = output_reg;
+      printf("OP_ADD [%d] [%d] \n", left_reg, right_reg);
+      printf("OP_LOAD_REG [0xFFF1] [%d] \n", output_reg);
+    case OPR_SUB:
+      printf("OP_SUB [%d] [%d] \n", left_reg, right_reg);
+      printf("OP_LOAD_REG [0xFFF3] [%d] \n", output_reg);
+    case OPR_MUL:
+      printf("OP_MUL [%d] [%d] \n", left_reg, right_reg);
+      printf("OP_LOAD_REG [0xFFF7] [%d] \n", output_reg);
+    case OPR_DIV:
+      printf("OP_DIV [%d] [%d] \n", left_reg, right_reg);
+      printf("OP_LOAD_REG [0xFFF9] [%d] \n", left_reg, right_reg);
+    default:
+     printf("OP_NONE \n"); 
+  }
+  return output_reg;
+
+}
+
 
 
 token_array_t * tokenizer(char * input_text){
@@ -106,6 +171,8 @@ char * load_code(char * program){
   
   return program;
 }
+
+
 
 
 
