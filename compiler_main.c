@@ -71,6 +71,12 @@ typedef struct TokenArray {
   token_t * tokenarray_ptr;
 }token_array_t;
 
+typedef enum {
+  OPR_ADD = 10,
+  OPR_SUB = 11,
+  OPR_MUL = 12,
+  OPR_DIV = 13,
+}Operations;
 
 typedef struct ASTNode {
   int NodeType;
@@ -92,6 +98,13 @@ typedef struct ByteStream{
   int capacity;
   uint16_t * binstream;
 }ByteStream_t;
+
+
+int used_reg_rev=0;
+uint16_t last_reg = 0xFFF0;
+
+ByteStream_t * output_stream;
+
 
 uint16_t translate(ASTNode_t * rootNode){ //, ByteStream_t * outputstream){
 
@@ -115,23 +128,53 @@ uint16_t translate(ASTNode_t * rootNode){ //, ByteStream_t * outputstream){
     right_reg = translate(rootNode->right);
     op = (rootNode->data).op;
   }
+  
+  int offset;
+  uint16_t * write_ptr;
+  if ((output_stream->capacity-output_stream->length)<=8){
+    output_stream->capacity *= 2;
+    output_stream->binstream = realloc(output_stream->binstream, sizeof(uint16_t) * output_stream->capacity);
+
+  }
 
   switch (op) {
     case OPR_ADD:
       uint16_t result_reg = output_reg;
       printf("OP_ADD [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF1] [%d] \n", output_reg);
+      uint16_t instruction_set[6] = {OP_ADD, left_reg, right_reg, OP_LOAD_REG, 0xFFF1, output_reg};
+      offset = output_stream->length;
+      write_ptr = output_stream->binstream + offset;
+      memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+      
+      
     case OPR_SUB:
       printf("OP_SUB [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF3] [%d] \n", output_reg);
+      uint16_t instruction_set[6] = {OP_SUB, left_reg, right_reg, OP_LOAD_REG, 0xFFF3, output_reg};
+      offset = output_stream->length;
+      write_ptr = output_stream->binstream + offset;
+      memcpy(write_ptr, instruction_set, sizeof(instruction_set));
     case OPR_MUL:
       printf("OP_MUL [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF7] [%d] \n", output_reg);
+      uint16_t instruction_set[6] = {OP_MUL, left_reg, right_reg, OP_LOAD_REG, 0xFFF7, output_reg};
+      offset = output_stream->length;
+      write_ptr = output_stream->binstream + offset;
+      memcpy(write_ptr, instruction_set, sizeof(instruction_set));
     case OPR_DIV:
       printf("OP_DIV [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF9] [%d] \n", left_reg, right_reg);
+      uint16_t instruction_set[6] = {OP_DIV, left_reg, right_reg, OP_LOAD_REG, 0xFFF9, output_reg};
+      offset = output_stream->length;
+      write_ptr = output_stream->binstream + offset;
+      memcpy(write_ptr, instruction_set, sizeof(instruction_set));
     default:
-     printf("OP_NONE \n"); 
+      printf("OP_NONE \n"); 
+      uint16_t instruction_set[1] = {OP_NONE};
+      offset = output_stream->length;
+      write_ptr = output_stream->binstream + offset;
+      memcpy(write_ptr, instruction_set, sizeof(instruction_set));
   }
   return output_reg;
 
@@ -177,7 +220,7 @@ char * load_code(char * program){
 
 
 // AI GENERATED FUNCTION
-bool is_valid_int(const char *str, int *out_value) {
+bool is_valid_int(const char *str) {
     // If the string is NULL or empty, it's not a valid int
     if (str == NULL || *str == '\0') {
         return false;
@@ -234,7 +277,7 @@ token_array_t * classifier(token_array_t * tokenarray){
       token_ptr->type = L_OPERATOR;
     }else if (strstr(c_operators,token_text)!=NULL) {
       token_ptr->type = C_OPERATOR;
-    }else if (is_valid_int(token_ptr->token, NULL)) {
+    }else if (is_valid_int(token_ptr->token)) {
       token_ptr->type = VALUE;
     }else if (strstr("EOF", token_text)!=NULL){
       token_ptr->type = EOF_Flag;
@@ -246,42 +289,66 @@ token_array_t * classifier(token_array_t * tokenarray){
 
 }
 
+token_array_t * tokenarray;  
+int read_pointer =0;
+
+ASTNode_t * ASTNodePool;
+int NodePool_Length = 0;
+
+// Writing this assuming a very simple statement like 10+(12+3) or smtn. we'll add complexity later on, its just a bunch of if statements anyways 
+ASTNode_t * evaluate_ast(){
+  NodePool_Length ++;
+  cur_token = tokenarray->tokenarray_ptr + read_pointer;
+  
+  ASTNode_t * node = ASTNodePool + NodePool_Length;
 
 
-int process(token_array_t * tokenarray) {
-     
-}
+  if (strstr(cur_token->token, "(")){
+    node->right = evaluate_ast();
+    read_pointer++;
+  }else if (strstr(cur_token->token, "=")) {
+    node->right = evaluate_ast();
+    read_pointer++;
+  }else if (strstr(cur_token->token, ")")){
+    read_pointer++;
+    return node;
+  }else if (cur_token->type == VALUE){
+    ASTNode_t * number_node = node;
+    char * random;
+    int num = (int) strtol(cur_token->token, random, 10); // if you're using bigger numbers, you're using the wrong tool.
+    
 
-int find_deepest_brac(token_array_t * tokenarray){
-  int deepest_brac = 0;
-  int live_counter = 0;
-  int highest = 0; 
-  int highest_i = 0;
-  token_t * root_token = tokenarray->tokenarray_ptr; 
-  token_t * cur_token;
-  for (int i = 0; i < tokenarray->length; i++){
-    cur_token = root_token + i;
-    if (cur_token->type ==  PUNCTUATION){
-      if (strstr(cur_token->token,"(")){
-        deepest_brac = i;
-        live_counter++;
-        if (live_counter > highest){
-          highest = live_counter;
-          highest_i = i;
-        }
-      }else if(strstr(cur_token->token,")")){
-        live_counter--;
-        
-      }
 
+    NodePool_Length++;
+    number_node->right = NULL;
+    number_node->left = NULL;
+    (number_node->data).value = num;
+    return number_node;
+  }else if (cur_token->type == A_OPERATOR){
+    ASTNode_t * op_node = ASTNodePool + NodePool_Length;
+    NodePool_Length++;
+    op_node->left = node;
+    op_node->right = evaluate_ast();
+    op_node->data.op = 0;
+    op_node->type = NODE_OPERATOR;
+
+    if (strstr(cur_token->token, "+")){
+      op_node->data.op = OPR_ADD;
+
+    }else if (strstr(curtoken->token, "-")){
+      op_node->data.op = OPR_SUB;
+
+    }else if (strstr(curtoken->token, "*")){
+      op_node->data.op = OPR_MUL;
+
+    }else if (strstr(curtoken->token, "/")){
+      op_node->data.op = OPR_DIV;
 
     }
-  };
-  deepest_brac = highest_i; // Further additions for { need to be made
-  return deepest_brac;
+    
 
+  }
 }
-
 
 
 int main(){
@@ -289,8 +356,11 @@ int main(){
   // Also every semicolon and bracket is preceeded and followed by a / and a semicolon signals the end of a command. 
   // For the purposes of this demonstration only 2 variables are allowed initially atleast. input and i. 
   // EOF is added automatically at end of program. 
-  token_array_t * tokenarray;  
-
+  ASTNodePool = malloc(sizeof(ASTNode_t)*4096); 
+  output_stream = sizeof(ByteStream_t);
+  output_stream->length = 0;
+  output_stream->capacity = 10;
+  output_stream->binstream = malloc(sizeof(uint16_t)*10);
   
   char * program = malloc(sizeof(char)*500);
   load_code(program);
@@ -301,7 +371,7 @@ int main(){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
-    printf("tokan: %d : %s : %d \n",i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
+    printf("token: %d : %s : %d \n",i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
     
   };
 
