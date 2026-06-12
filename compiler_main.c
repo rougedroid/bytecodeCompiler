@@ -48,6 +48,11 @@ Program in test_prog
 // Or...... we could write the program with a placeholder address, and then at the end, we calculate how long our program is, and assign address spaces outside this length 
 // second method is preffered cuz we need to maintain variable list with registers anyways cuz variables will be called later on also. 
 
+// Forward Declarations
+ASTNode_t *parse_expression(void);
+ASTNode_t *parse_term(void);
+ASTNode_t *parse_primary(void);
+
 typedef enum {
   VARIABLE = 10,
   KEYWORD = 20,
@@ -315,65 +320,38 @@ int read_pointer =0;
 ASTNode_t * ASTNodePool;
 int NodePool_Length = 0;
 
-// Writing this assuming a very simple statement like 10+(12+3) or smtn. we'll add complexity later on, its just a bunch of if statements anyways 
-ASTNode_t * evaluate_ast(){
-  NodePool_Length ++;
+token_t * peek(){
+  return (tokenarray->tokenarray_ptr+read_pointer);
+}
+
+
+ASTNode_t * parse_primary(){
   token_t * cur_token;
   cur_token = tokenarray->tokenarray_ptr + read_pointer;
   
-  ASTNode_t * node = ASTNodePool + NodePool_Length;
+  ASTNode_t * outputNode = malloc (sizeof(ASTNode_t));
 
-
-  if (strstr(cur_token->token, "(")){
-    node->right = evaluate_ast();
+  if (cur_token->type == VALUE){
+    outputNode->left = NULL;
+    outputNode->right = NULL;
+    outputNode->NodeType = NODE_VALUE;
+    (outputNode->data).value = (int) strtol(cur_token->token, NULL, 10);
     read_pointer++;
-  }else if (strstr(cur_token->token, "=")) {
-    node->right = evaluate_ast();
-    read_pointer++;
-  }else if (strstr(cur_token->token, ")")){
-    read_pointer++;
-    return node;
-  }else if (cur_token->type == VALUE){
-    ASTNode_t * number_node = node;
-    int num = (int) strtol(cur_token->token, NULL, 10); // if you're using bigger numbers, you're using the wrong tool.
-    
-
-
-    NodePool_Length++;
-    number_node->right = NULL;
-    number_node->left = NULL;
-    (number_node->data).value = num;
-    number_node->NodeType = NODE_VALUE;
-    read_pointer++;
-    return number_node;
-  }else if (cur_token->type == A_OPERATOR){
-    printf("Is Operator \n");
-    ASTNode_t * op_node = ASTNodePool + NodePool_Length;
-    NodePool_Length++;
-    op_node->left = node;
-    op_node->right = evaluate_ast();
-    op_node->data.op = 0;
-    op_node->NodeType = NODE_OPERATOR;
-    
-    printf("%s \n", op_node->data.op);
-
-    if (strstr(cur_token->token, "+")){
-      op_node->data.op = OPR_ADD;
-
-    }else if (strstr(cur_token->token, "-")){
-      op_node->data.op = OPR_SUB;
-
-    }else if (strstr(cur_token->token, "*")){
-      op_node->data.op = OPR_MUL;
-
-    }else if (strstr(cur_token->token, "/")){
-      op_node->data.op = OPR_DIV;
-
-    }
-    
-
+    return outputNode;
+  }else if{
+    ;
   }
+
 }
+
+ASTNode_t * parse_term(){
+  
+}
+
+ASTNode_t * parse_expression(){
+  ;
+}
+
 
 
 int main(){
@@ -402,6 +380,5 @@ int main(){
   };*/
 
 //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
-  translate(evaluate_ast());
   printf("%d \n", output_stream->binstream[1]);
 }
