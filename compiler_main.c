@@ -132,8 +132,10 @@ uint16_t translate(ASTNode_t * rootNode){ //, ByteStream_t * outputstream){
   
   output_reg = last_reg - used_reg_rev;
   used_reg_rev+=2;
-
+  
   printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType),output_reg, used_reg_rev);
+
+
   if (rootNode->NodeType == NODE_VALUE){
     //return (rootNode->data).value;
     printf("WRITE_CONST_INT [%d] [%d] \n", output_reg, (rootNode->data).value);
@@ -342,15 +344,18 @@ ASTNode_t * evaluate_ast(){
     number_node->left = NULL;
     (number_node->data).value = num;
     number_node->NodeType = NODE_VALUE;
-
+    read_pointer++;
     return number_node;
   }else if (cur_token->type == A_OPERATOR){
+    printf("Is Operator \n");
     ASTNode_t * op_node = ASTNodePool + NodePool_Length;
     NodePool_Length++;
     op_node->left = node;
     op_node->right = evaluate_ast();
     op_node->data.op = 0;
     op_node->NodeType = NODE_OPERATOR;
+    
+    printf("%s \n", op_node->data.op);
 
     if (strstr(cur_token->token, "+")){
       op_node->data.op = OPR_ADD;
@@ -387,15 +392,16 @@ int main(){
   tokenarray = tokenizer(program);
   // For Debugging:
   classifier(tokenarray);
+  /*
   for (int i = 0; i < (tokenarray->length); i++){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
     printf("token: %d : %s : %d \n",i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
     
-  };
+  };*/
 
 //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
-  evaluate_ast();
+  translate(evaluate_ast());
   printf("%d \n", output_stream->binstream[1]);
 }
