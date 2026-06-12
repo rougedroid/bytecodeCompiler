@@ -6,7 +6,7 @@
 #include <ctype.h>
 
 #define punctuations ";:{}(),"
-#define a_operators "+-//*="
+#define a_operators "+-/+*="
 #define keywords "if else return while" // 4 keywords. idc enough to deal with string arrays in C.
 #define c_operators "< > =="            // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false.
 #define l_operators "? ! | & "          // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false.
@@ -217,7 +217,7 @@ uint16_t translate(ASTNode_t *rootNode)
 token_array_t *tokenizer(char *input_text)
 {
   token_array_t *tokenarray = malloc(sizeof(token_array_t));
-  char *token_str = strtok(input_text, "/");
+  char *token_str = strtok(input_text, " ");
   tokenarray->length = 0;
   tokenarray->capacity = 1;
   tokenarray->tokenarray_ptr = malloc(sizeof(token_t));
@@ -229,7 +229,7 @@ token_array_t *tokenizer(char *input_text)
       token = (tokenarray->tokenarray_ptr + tokenarray->length);
       strcpy(token->token, token_str);
       tokenarray->length++;
-      token_str = strtok(NULL, "/");
+      token_str = strtok(NULL, " ");
       continue;
     }
     else
@@ -246,7 +246,7 @@ char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
   //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "1/+/3/+/5/+/(/6/+/7/)/+3/;");
+  strcpy(program, "1 + 3 / ( 4 - 1 ) ;");
   //    strcpy(program, "1/+/2/;");
   return program;
 }
@@ -389,22 +389,26 @@ ASTNode_t *parse_term()
   ASTNode_t *nextnode = ASTNodePool + NodePool_Length;
   NodePool_Length++;
   nextnode = parse_primary();
-  while (strstr("/*", (tokenarray->tokenarray_ptr + read_pointer)->token))
+  while (strstr("*/", (tokenarray->tokenarray_ptr + read_pointer)->token))
   {
     read_pointer++;
     ASTNode_t *newNode = ASTNodePool + NodePool_Length;
     NodePool_Length++;
     newNode->left = nextnode;
-    newNode->right = parse_expression();
-    newNode->NodeType = NODE_OPERATOR;
-    if (strstr("/", (tokenarray->tokenarray_ptr + read_pointer - 2)->token))
+
+    if (strstr("/", (tokenarray->tokenarray_ptr + read_pointer -1 )->token))
     {
+      printf("CODE DIVVV \n");
       (newNode->data).op = OPR_DIV;
     }
     else
     {
+      printf("%s\n", (tokenarray->tokenarray_ptr + read_pointer -1)->token);
+      printf("CODE MULL\n");
       newNode->data.op = OPR_MUL;
     }
+    newNode->right = parse_expression();
+    newNode->NodeType = NODE_OPERATOR;
     nextnode = newNode;
   }
   return nextnode;
