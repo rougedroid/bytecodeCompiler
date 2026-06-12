@@ -238,7 +238,8 @@ token_array_t * tokenizer(char * input_text){
 char * load_code(char * program){
   // This is placeholder code. Put code to actually read from file. 
 //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "1/+/3/+/5/+/(/6/+/7/)/");
+//  strcpy(program, "1/+/3/+/5/+/6/+/7/");
+    strcpy(program, "1/+/2/;");
   return program;
 }
 
@@ -326,6 +327,9 @@ token_t * peek(){
   return (tokenarray->tokenarray_ptr+read_pointer);
 }
 
+void check_break(){
+
+}
 
 ASTNode_t * parse_primary(){
   token_t * cur_token;
@@ -341,7 +345,8 @@ ASTNode_t * parse_primary(){
     read_pointer++;
     return outputNode;
   }else{
-    ;
+    printf("NON NUMBER IN PARSE PRIMARY. READ POINTER: [%d] \n", read_pointer);
+    return NULL;
   }
 
 }
@@ -349,7 +354,7 @@ ASTNode_t * parse_primary(){
 ASTNode_t * parse_term(){
   ASTNode_t * nextnode = malloc(sizeof(ASTNode_t));
   nextnode = parse_primary();
-  if (strstr("/*",(tokenarray->tokenarray_ptr+read_pointer)->token)){
+  while (strstr("/*",(tokenarray->tokenarray_ptr+read_pointer)->token)){
     read_pointer++;
     ASTNode_t * newNode = ASTNodePool + NodePool_Length;
     NodePool_Length++;
@@ -363,37 +368,38 @@ ASTNode_t * parse_term(){
     }
     return newNode;
 
-  }else {
-    return nextnode;
   }
+  return nextnode;
 }
 ASTNode_t * parse_expression(){
+  
+  printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   ASTNode_t * leftnode = parse_primary();
-  if (strstr("+-",(tokenarray->tokenarray_ptr + read_pointer)->token)){
+  //printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
+  char * current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
+  while (current_token != NULL && strcmp(current_token, ";") != 0 && strstr("+-", current_token)) {
     ASTNode_t * newNode = ASTNodePool + NodePool_Length;
-    newNode->left = leftnode;
-    newNode->right = parse_term();
-    newNode->NodeType = NODE_OPERATOR;
-
-    if (strstr("+", (tokenarray->tokenarray_ptr+read_pointer -1)->token)){
+    if (strstr("+", (tokenarray->tokenarray_ptr+read_pointer)->token)){
       newNode->data.op = OPR_ADD;
     }else{
       newNode->data.op = OPR_SUB;
     }
+    newNode->left = leftnode;
+    read_pointer++;
+    newNode->right = parse_expression();
+    
+    newNode->NodeType = NODE_OPERATOR;
+
     return newNode;
   
-  }else {
-    read_pointer--;
-
-    return parse_term();
-
   }
+  return leftnode;
+  
   
 }
 
 void print_ast(ASTNode_t *node, int level) {
     if (node == NULL) return;
-
     // Print indentation based on current tree depth
     for (int i = 0; i < level; i++) {
         printf("    "); // 4 spaces per depth level
@@ -406,17 +412,17 @@ void print_ast(ASTNode_t *node, int level) {
         // Mapping your operation enums to printable characters
         char op_char = '?';
         switch (node->data.op) {
-            case OP_ADD: op_char = '+'; break;
-            case OP_SUB: op_char = '-'; break;
-            case OP_MUL: op_char = '*'; break;
-            case OP_DIV: op_char = '/'; break;
+            case OPR_ADD: op_char = '+'; break;
+            case OPR_SUB: op_char = '-'; break;
+            case OPR_MUL: op_char = '*'; break;
+            case OPR_DIV: op_char = '/'; break;
         }
         printf("[OP: %c]\n", op_char);
     }
 
     // Recursively print children, stepping up the indentation level
-    print_ast(node->left, level + 1);
-    print_ast(node->right, level + 1);
+    print_ast(node->left, level +1);
+    print_ast(node->right, level +1 );
 }
 
 int main(){
@@ -435,14 +441,14 @@ int main(){
   tokenarray = tokenizer(program);
   // For Debugging:
   classifier(tokenarray);
-  /*
+  
   for (int i = 0; i < (tokenarray->length); i++){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
     printf("token: %d : %s : %d \n",i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
     
-  };*/
+  };
 
 //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
 //  translate(parse_expression());
