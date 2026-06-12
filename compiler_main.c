@@ -246,7 +246,7 @@ char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
   //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "1/+/3/+/5/+/6/+/7/+3/;");
+  strcpy(program, "1/+/3/+/5/+/(/6/+/7/)/+3/;");
   //    strcpy(program, "1/+/2/;");
   return program;
 }
@@ -364,10 +364,14 @@ ASTNode_t *parse_primary()
     read_pointer++;
     return outputNode;
   }else if (strstr("()", cur_token->token)) {
+    printf("Bracket detected \n");
     if (strstr("(", cur_token->token)){
       read_pointer++;
       outputNode = parse_expression();
+
+      cur_token = tokenarray->tokenarray_ptr + read_pointer;
       if (strstr(")", cur_token->token)){
+        printf("Closed brac\n");
         read_pointer++;
         return outputNode;
       }
