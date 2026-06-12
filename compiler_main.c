@@ -48,6 +48,7 @@ Program in test_prog
 // Or...... we could write the program with a placeholder address, and then at the end, we calculate how long our program is, and assign address spaces outside this length 
 // second method is preffered cuz we need to maintain variable list with registers anyways cuz variables will be called later on also. 
 
+
 typedef enum {
   VARIABLE = 10,
   KEYWORD = 20,
@@ -117,6 +118,12 @@ typedef enum{
 
 }Opcodes;
 
+// Forward Declarations
+ASTNode_t *parse_expression(void);
+ASTNode_t *parse_term(void);
+ASTNode_t *parse_primary(void);
+
+
 int used_reg_rev=0;
 uint16_t last_reg = 0xFFF0;
 
@@ -146,59 +153,66 @@ uint16_t translate(ASTNode_t * rootNode){ //, ByteStream_t * outputstream){
     left_reg = translate(rootNode->left);
     right_reg = translate(rootNode->right);
     op = (rootNode->data).op;
-  }
-  
-  int offset;
-  uint16_t * write_ptr;
-  if ((output_stream->capacity-output_stream->length)<=8){
-    output_stream->capacity *= 2;
-    output_stream->binstream = realloc(output_stream->binstream, sizeof(uint16_t) * output_stream->capacity);
+    int offset;
+    uint16_t * write_ptr;
+    if ((output_stream->capacity-output_stream->length)<=8){
+      output_stream->capacity *= 2;
+      output_stream->binstream = realloc(output_stream->binstream, sizeof(uint16_t) * output_stream->capacity);
 
+    }
+  
+    uint16_t instruction_set[6];
+    switch (op) {
+      case OPR_ADD:
+        uint16_t result_reg = output_reg;
+        printf("OP_ADD [%d] [%d] \n", left_reg, right_reg);
+        printf("OP_LOAD_REG [0xFFF1] [%d] \n", output_reg);
+        uint16_t instruction_set_1[6] = {OP_ADD, left_reg, right_reg, OP_LOAD_REG, 0xFFF1, output_reg};
+        offset = output_stream->length;
+        write_ptr = output_stream->binstream + offset;
+        memcpy(write_ptr, instruction_set_1, sizeof(instruction_set_1));
+        break;
+      
+      case OPR_SUB:
+        printf("OP_SUB [%d] [%d] \n", left_reg, right_reg);
+        printf("OP_LOAD_REG [0xFFF3] [%d] \n", output_reg);
+        uint16_t instruction_set_2[6] = {OP_SUB, left_reg, right_reg, OP_LOAD_REG, 0xFFF3, output_reg};
+        offset = output_stream->length;
+        write_ptr = output_stream->binstream + offset;
+        memcpy(write_ptr, instruction_set_2, sizeof(instruction_set_2));
+        break;
+      case OPR_MUL:
+        printf("OP_MUL [%d] [%d] \n", left_reg, right_reg);
+        printf("OP_LOAD_REG [0xFFF7] [%d] \n", output_reg);
+        uint16_t instruction_set_3[6] = {OP_MUL, left_reg, right_reg, OP_LOAD_REG, 0xFFF7, output_reg};
+        offset = output_stream->length;
+        write_ptr = output_stream->binstream + offset;
+        memcpy(write_ptr, instruction_set_3, sizeof(instruction_set_3));
+        break;
+      case OPR_DIV:
+        printf("OP_DIV [%d] [%d] \n", left_reg, right_reg);
+        printf("OP_LOAD_REG [0xFFF9] [%d] \n", left_reg, right_reg);
+        uint16_t instruction_set_4[6] = {OP_DIV, left_reg, right_reg, OP_LOAD_REG, 0xFFF9, output_reg};
+        offset = output_stream->length;
+        write_ptr = output_stream->binstream + offset;
+        memcpy(write_ptr, instruction_set_4, sizeof(instruction_set_4));
+        break;
+      default:
+        printf("OP_NONE \n"); 
+        uint16_t instruction_set_5[1] = {OP_NONE};
+        offset = output_stream->length;
+        write_ptr = output_stream->binstream + offset;
+        memcpy(write_ptr, instruction_set_5, sizeof(instruction_set_5));
+    }
   }
   
-  uint16_t instruction_set[6];
-  switch (op) {
-    case OPR_ADD:
-      uint16_t result_reg = output_reg;
-      printf("OP_ADD [%d] [%d] \n", left_reg, right_reg);
-      printf("OP_LOAD_REG [0xFFF1] [%d] \n", output_reg);
-      uint16_t instruction_set_1[6] = {OP_ADD, left_reg, right_reg, OP_LOAD_REG, 0xFFF1, output_reg};
-      offset = output_stream->length;
-      write_ptr = output_stream->binstream + offset;
-      memcpy(write_ptr, instruction_set_1, sizeof(instruction_set_1));
-      
-      
-    case OPR_SUB:
-      printf("OP_SUB [%d] [%d] \n", left_reg, right_reg);
-      printf("OP_LOAD_REG [0xFFF3] [%d] \n", output_reg);
-      uint16_t instruction_set_2[6] = {OP_SUB, left_reg, right_reg, OP_LOAD_REG, 0xFFF3, output_reg};
-      offset = output_stream->length;
-      write_ptr = output_stream->binstream + offset;
-      memcpy(write_ptr, instruction_set_2, sizeof(instruction_set_2));
-    case OPR_MUL:
-      printf("OP_MUL [%d] [%d] \n", left_reg, right_reg);
-      printf("OP_LOAD_REG [0xFFF7] [%d] \n", output_reg);
-      uint16_t instruction_set_3[6] = {OP_MUL, left_reg, right_reg, OP_LOAD_REG, 0xFFF7, output_reg};
-      offset = output_stream->length;
-      write_ptr = output_stream->binstream + offset;
-      memcpy(write_ptr, instruction_set_3, sizeof(instruction_set_3));
-    case OPR_DIV:
-      printf("OP_DIV [%d] [%d] \n", left_reg, right_reg);
-      printf("OP_LOAD_REG [0xFFF9] [%d] \n", left_reg, right_reg);
-      uint16_t instruction_set_4[6] = {OP_DIV, left_reg, right_reg, OP_LOAD_REG, 0xFFF9, output_reg};
-      offset = output_stream->length;
-      write_ptr = output_stream->binstream + offset;
-      memcpy(write_ptr, instruction_set_4, sizeof(instruction_set_4));
-    default:
-      printf("OP_NONE \n"); 
-      uint16_t instruction_set_5[1] = {OP_NONE};
-      offset = output_stream->length;
-      write_ptr = output_stream->binstream + offset;
-      memcpy(write_ptr, instruction_set_5, sizeof(instruction_set_5));
-  }
   return output_reg;
 
 }
+
+
+
+
 
 
 
@@ -231,7 +245,8 @@ token_array_t * tokenizer(char * input_text){
 char * load_code(char * program){
   // This is placeholder code. Put code to actually read from file. 
 //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "1/+/3/+/5/+/(/6/+/7/)/");
+  strcpy(program, "1/+/3/+/5/+/6/+/7/+3/;");
+//    strcpy(program, "1/+/2/;");
   return program;
 }
 
@@ -315,66 +330,110 @@ int read_pointer =0;
 ASTNode_t * ASTNodePool;
 int NodePool_Length = 0;
 
-// Writing this assuming a very simple statement like 10+(12+3) or smtn. we'll add complexity later on, its just a bunch of if statements anyways 
-ASTNode_t * evaluate_ast(){
-  NodePool_Length ++;
+token_t * peek(){
+  return (tokenarray->tokenarray_ptr+read_pointer);
+}
+
+void check_break(){
+
+}
+
+ASTNode_t * parse_primary(){
   token_t * cur_token;
   cur_token = tokenarray->tokenarray_ptr + read_pointer;
   
-  ASTNode_t * node = ASTNodePool + NodePool_Length;
+  ASTNode_t * outputNode = malloc (sizeof(ASTNode_t));
 
-
-  if (strstr(cur_token->token, "(")){
-    node->right = evaluate_ast();
+  if (cur_token->type == VALUE){
+    outputNode->left = NULL;
+    outputNode->right = NULL;
+    outputNode->NodeType = NODE_VALUE;
+    (outputNode->data).value = (int) strtol(cur_token->token, NULL, 10);
     read_pointer++;
-  }else if (strstr(cur_token->token, "=")) {
-    node->right = evaluate_ast();
-    read_pointer++;
-  }else if (strstr(cur_token->token, ")")){
-    read_pointer++;
-    return node;
-  }else if (cur_token->type == VALUE){
-    ASTNode_t * number_node = node;
-    int num = (int) strtol(cur_token->token, NULL, 10); // if you're using bigger numbers, you're using the wrong tool.
-    
-
-
-    NodePool_Length++;
-    number_node->right = NULL;
-    number_node->left = NULL;
-    (number_node->data).value = num;
-    number_node->NodeType = NODE_VALUE;
-    read_pointer++;
-    return number_node;
-  }else if (cur_token->type == A_OPERATOR){
-    printf("Is Operator \n");
-    ASTNode_t * op_node = ASTNodePool + NodePool_Length;
-    NodePool_Length++;
-    op_node->left = node;
-    op_node->right = evaluate_ast();
-    op_node->data.op = 0;
-    op_node->NodeType = NODE_OPERATOR;
-    
-    printf("%s \n", op_node->data.op);
-
-    if (strstr(cur_token->token, "+")){
-      op_node->data.op = OPR_ADD;
-
-    }else if (strstr(cur_token->token, "-")){
-      op_node->data.op = OPR_SUB;
-
-    }else if (strstr(cur_token->token, "*")){
-      op_node->data.op = OPR_MUL;
-
-    }else if (strstr(cur_token->token, "/")){
-      op_node->data.op = OPR_DIV;
-
-    }
-    
-
+    return outputNode;
+  }else{
+    printf("NON NUMBER IN PARSE PRIMARY. READ POINTER: [%d] \n", read_pointer);
+    return NULL;
   }
+
 }
 
+ASTNode_t * parse_term(){
+  ASTNode_t * nextnode = malloc(sizeof(ASTNode_t));
+  nextnode = parse_primary();
+  while (strstr("/*",(tokenarray->tokenarray_ptr+read_pointer)->token)){
+    read_pointer++;
+    ASTNode_t * newNode = ASTNodePool + NodePool_Length;
+    NodePool_Length++;
+    newNode->left = nextnode;
+    newNode->right = parse_expression();
+    newNode->NodeType = NODE_OPERATOR;
+    if (strstr("/",(tokenarray->tokenarray_ptr+read_pointer-2)->token)){
+      (newNode->data).op = OPR_DIV;
+    } else {
+      newNode->data.op = OPR_MUL;
+    }
+    nextnode= newNode;
+
+
+  }
+  return nextnode;
+}
+ASTNode_t * parse_expression(){
+  
+  printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
+  ASTNode_t * leftnode = parse_term();
+  //printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
+  char * current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
+  while (current_token != NULL && strcmp(current_token, ";") != 0 && strstr("+-", current_token)) {
+    ASTNode_t * newNode = ASTNodePool + NodePool_Length;
+    NodePool_Length++;
+    if (strstr("+", (tokenarray->tokenarray_ptr+read_pointer)->token)){
+      newNode->data.op = OPR_ADD;
+    }else{
+      newNode->data.op = OPR_SUB;
+    }
+    newNode->left = leftnode;
+    read_pointer++;
+    newNode->right = parse_term();
+    
+    newNode->NodeType = NODE_OPERATOR;
+
+    leftnode = newNode;
+    current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
+  
+  }
+  return leftnode;
+  
+  
+}
+
+void print_ast(ASTNode_t *node, int level) {
+    if (node == NULL) return;
+    // Print indentation based on current tree depth
+    for (int i = 0; i < level; i++) {
+        printf("    "); // 4 spaces per depth level
+    }
+
+    // Print node data depending on its type
+    if (node->NodeType == NODE_VALUE) {
+        printf("[VAL: %d]\n", node->data.value);
+    } else if (node->NodeType == NODE_OPERATOR) {
+        // Mapping your operation enums to printable characters
+        char op_char = '?';
+        switch (node->data.op) {
+            case OPR_ADD: op_char = '+'; break;
+            case OPR_SUB: op_char = '-'; break;
+            case OPR_MUL: op_char = '*'; break;
+            case OPR_DIV: op_char = '/'; break;
+        }
+        printf("[OP: %c]\n", op_char);
+    }
+
+    // Recursively print children, stepping up the indentation level
+    print_ast(node->left, level+1);
+    print_ast(node->right, level +1);
+}
 
 int main(){
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader. 
@@ -392,16 +451,19 @@ int main(){
   tokenarray = tokenizer(program);
   // For Debugging:
   classifier(tokenarray);
-  /*
+  
   for (int i = 0; i < (tokenarray->length); i++){
     //printf("Token Number: %d \n", i);
     //printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
     
     printf("token: %d : %s : %d \n",i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr +i)->type);
     
-  };*/
+  };
 
 //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
-  translate(evaluate_ast());
+//  translate(parse_expression());
+  ASTNode_t * node_structure = parse_expression();
+  print_ast(node_structure, 0);
+  translate(node_structure);
   printf("%d \n", output_stream->binstream[1]);
 }
