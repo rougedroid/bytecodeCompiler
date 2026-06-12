@@ -48,10 +48,6 @@ Program in test_prog
 // Or...... we could write the program with a placeholder address, and then at the end, we calculate how long our program is, and assign address spaces outside this length 
 // second method is preffered cuz we need to maintain variable list with registers anyways cuz variables will be called later on also. 
 
-// Forward Declarations
-ASTNode_t *parse_expression(void);
-ASTNode_t *parse_term(void);
-ASTNode_t *parse_primary(void);
 
 typedef enum {
   VARIABLE = 10,
@@ -121,6 +117,12 @@ typedef enum{
   OP_DIV = 0x0033, // OPCODE [REG1] [REG2] --> Store quotent in 0xFFF9 and 0xFFFA ; Remainder in 0xFFFB and 0xFFFC;
 
 }Opcodes;
+
+// Forward Declarations
+ASTNode_t *parse_expression(void);
+ASTNode_t *parse_term(void);
+ASTNode_t *parse_primary(void);
+
 
 int used_reg_rev=0;
 uint16_t last_reg = 0xFFF0;
@@ -338,7 +340,7 @@ ASTNode_t * parse_primary(){
     (outputNode->data).value = (int) strtol(cur_token->token, NULL, 10);
     read_pointer++;
     return outputNode;
-  }else if{
+  }else{
     ;
   }
 
@@ -346,15 +348,15 @@ ASTNode_t * parse_primary(){
 
 ASTNode_t * parse_term(){
   ASTNode_t * nextnode = malloc(sizeof(ASTNode_t));
-  nextnode = parse_term();
-  if (strstr("/*",(tokenarray->tokenarray_ptr+read_pointer))){
+  nextnode = parse_primary();
+  if (strstr("/*",(tokenarray->tokenarray_ptr+read_pointer)->token)){
     read_pointer++;
     ASTNode_t * newNode = ASTNodePool + NodePool_Length;
     NodePool_Length++;
     newNode->left = nextnode;
     newNode->right = parse_term();
     newNode->NodeType = NODE_OPERATOR;
-    if (strstr("/",(tokenarray->tokenarray_ptr+read_pointer-2))){
+    if (strstr("/",(tokenarray->tokenarray_ptr+read_pointer-2)->token)){
       (newNode->data).op = OPR_DIV;
     } else {
       newNode->data.op = OPR_MUL;
@@ -367,13 +369,13 @@ ASTNode_t * parse_term(){
 }
 ASTNode_t * parse_expression(){
   ASTNode_t * leftnode = parse_primary();
-  if (strstr("+-",(tokenarray->tokenarray_ptr + read_pointer))){
+  if (strstr("+-",(tokenarray->tokenarray_ptr + read_pointer)->token)){
     ASTNode_t * newNode = ASTNodePool + NodePool_Length;
     newNode->left = leftnode;
-    newNode->right = parse_expression();
+    newNode->right = parse_term();
     newNode->NodeType = NODE_OPERATOR;
 
-    if (strstr("+", tokenarray->tokenarray_ptr+read_pointer -1)){
+    if (strstr("+", (tokenarray->tokenarray_ptr+read_pointer -1)->token)){
       newNode->data.op = OPR_ADD;
     }else{
       newNode->data.op = OPR_SUB;
@@ -383,13 +385,39 @@ ASTNode_t * parse_expression(){
   }else {
     read_pointer--;
 
-    return parse_term;
+    return parse_term();
 
   }
   
 }
 
+void print_ast(ASTNode_t *node, int level) {
+    if (node == NULL) return;
 
+    // Print indentation based on current tree depth
+    for (int i = 0; i < level; i++) {
+        printf("    "); // 4 spaces per depth level
+    }
+
+    // Print node data depending on its type
+    if (node->NodeType == NODE_VALUE) {
+        printf("[VAL: %d]\n", node->data.value);
+    } else if (node->NodeType == NODE_OPERATOR) {
+        // Mapping your operation enums to printable characters
+        char op_char = '?';
+        switch (node->data.op) {
+            case OP_ADD: op_char = '+'; break;
+            case OP_SUB: op_char = '-'; break;
+            case OP_MUL: op_char = '*'; break;
+            case OP_DIV: op_char = '/'; break;
+        }
+        printf("[OP: %c]\n", op_char);
+    }
+
+    // Recursively print children, stepping up the indentation level
+    print_ast(node->left, level + 1);
+    print_ast(node->right, level + 1);
+}
 
 int main(){
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader. 
@@ -417,5 +445,7 @@ int main(){
   };*/
 
 //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
+//  translate(parse_expression());
+  print_ast(parse_expression(), 0);
   printf("%d \n", output_stream->binstream[1]);
 }
