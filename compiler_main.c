@@ -345,11 +345,48 @@ ASTNode_t * parse_primary(){
 }
 
 ASTNode_t * parse_term(){
-  
-}
+  ASTNode_t * nextnode = malloc(sizeof(ASTNode_t));
+  nextnode = parse_term();
+  if (strstr("/*",(tokenarray->tokenarray_ptr+read_pointer))){
+    read_pointer++;
+    ASTNode_t * newNode = ASTNodePool + NodePool_Length;
+    NodePool_Length++;
+    newNode->left = nextnode;
+    newNode->right = parse_term();
+    newNode->NodeType = NODE_OPERATOR;
+    if (strstr("/",(tokenarray->tokenarray_ptr+read_pointer-2))){
+      (newNode->data).op = OPR_DIV;
+    } else {
+      newNode->data.op = OPR_MUL;
+    }
+    return newNode;
 
+  }else {
+    return nextnode;
+  }
+}
 ASTNode_t * parse_expression(){
-  ;
+  ASTNode_t * leftnode = parse_primary();
+  if (strstr("+-",(tokenarray->tokenarray_ptr + read_pointer))){
+    ASTNode_t * newNode = ASTNodePool + NodePool_Length;
+    newNode->left = leftnode;
+    newNode->right = parse_expression();
+    newNode->NodeType = NODE_OPERATOR;
+
+    if (strstr("+", tokenarray->tokenarray_ptr+read_pointer -1)){
+      newNode->data.op = OPR_ADD;
+    }else{
+      newNode->data.op = OPR_SUB;
+    }
+    return newNode;
+  
+  }else {
+    read_pointer--;
+
+    return parse_term;
+
+  }
+  
 }
 
 
