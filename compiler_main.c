@@ -142,6 +142,8 @@ typedef enum{
   OP_DIV = 0x0033, // OPCODE [REG1] [REG2] --> Store quotent in 0xFFF9 and 0xFFFA ; Remainder in 0xFFFB and 0xFFFC;
   OP_CMP_GTR = 0x0034, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
   OP_CMP_LSR = 0x0035, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_CMP_GTR_JMP = 0x0036, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_CMP_LSR_JMP = 0x0037, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
 
 }Opcodes;
 
@@ -156,6 +158,8 @@ typedef struct Logical_Result{
 ASTNode_t *parse_expression(void);
 ASTNode_t *parse_term(void);
 ASTNode_t *parse_primary(void);
+void parse_program(void);
+
 
 int used_reg_rev = 0;
 uint16_t last_reg = 0xFFF0;
@@ -538,6 +542,8 @@ logical_result_t * parse_logic(){
     }else if (strstr(cur_token->token, "<")){
       result->Opcode = OP_CMP_LSR;
     }
+  }else{
+    printf("Expected ; After if ((..) \n");
   }
   ASTNode_t * right_node = parse_expression();
 
@@ -606,19 +612,61 @@ void parse_statement()
       logical_result_t * result;
       read_pointer++;
       uint16_t op;
+      int jmpat;
+      int initlen;
+      int jmp_else_index;
       current_token = tokenarray->tokenarray_ptr + read_pointer;
       if (strstr(current_token->token, "(")){
         // i need parse logic to tell me which comparison op to use and what the two registers are to be compared.
         result = parse_logic();
 
         current_token = tokenarray->tokenarray_ptr + read_pointer;
-        if (strstr(current_token, ")")){
+        if (strstr(current_token->token, ")")){
+
           read_pointer ++;
 
           current_token = tokenarray->tokenarray_ptr + read_pointer;
-          if (strstr(current_token, "{")){
+          jmpat = output_stream->length + 5;
+          switch (op){
+            case OP_CMP_JMP:
+              printf("OP_CMP_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+              break;
+            case OP_CMP_GTR_JMP:
+              printf("OP_CMP_GTR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+
+              break;
+            case OP_CMP_LSR_JMP:
+              printf("OP_CMP_LSR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+              break;
+            default:
+              printf("OP_NONE OP_NONE OP_NONE OP_NONE \n");
+          }
+          if (strstr(current_token->token, "{")){
             read_pointer++;
-            parse_program();
+            initlen = output_stream->length;
+            parse_program(); // this will also write out the code for + if condition. 
+            jmp_else_index = output_stream->length + 1;
+            printf("OP_JMP_RELP [%d] \n", 0xABCD);
+            output_stream->binstream[jmpat] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig 
+            current_token = tokenarray->tokenarray_ptr + read_pointer;
+            if (strstr(current_token->token, "}")){
+              read_pointer++;
+              current_token = tokenarray->tokenarray_ptr + read_pointer;
+              if (strstr(current_token->token, "else")){
+                if (strstr(current_token->token, "{")){
+                  read_pointer++;
+                  initlen = output_stream->length;
+                  parse_program(); // this will also write out the code for + if condition. 
+                  output_stream->binstream[jmp_else_index] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig 
+                  current_token = tokenarray->tokenarray_ptr + read_pointer;
+                  if (strstr(current_token->token, "}")){
+                    read_pointer++;
+                    return;
+                  }
+                }
+              }
+              
+            }
 
           }
         }else{
@@ -637,16 +685,16 @@ void parse_statement()
   }
 }
 
-void *parse_program()
+void parse_program()
 {
   token_t * cur_token = tokenarray->tokenarray_ptr + read_pointer;
 
 
-  while (current_token != NULL && strcmp(current_token, "EOF") != 0 && strcmp(current_token, "}" !=0)){
+  while (cur_token != NULL && strcmp(cur_token->token, "EOF") != 0 && strcmp(cur_token->token, "}") !=0){
     parse_statement();
     cur_token = tokenarray->tokenarray_ptr + read_pointer;
   }
-  if (strstr(current_token, "}")) {
+  if (strstr(cur_token->token, "}")) {
     return;
   }
 }
