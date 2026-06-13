@@ -55,24 +55,25 @@ typedef enum
   L_OPERATOR = 22,
   C_OPERATOR = 23,
   PUNCTUATION = 30,
-  VALUE_REG = 31, 
+  VALUE_REG = 31,
 
   EOF_Flag = 69,
 } TokenTypes;
 
-typedef struct Variable{
+typedef struct Variable
+{
   char name[10];
   uint16_t reg;
-  
-}variable_t;
 
-typedef struct VariablePool {
+} variable_t;
+
+typedef struct VariablePool
+{
   int length;
   int capacity;
-  variable_t * varptr;
+  variable_t *varptr;
 
-}var_pool_t;
-
+} var_pool_t;
 
 typedef struct Token
 {
@@ -150,6 +151,7 @@ ASTNode_t *parse_primary(void);
 
 int used_reg_rev = 0;
 uint16_t last_reg = 0xFFF0;
+var_pool_t *varpool;
 
 ByteStream_t *output_stream;
 
@@ -170,7 +172,9 @@ uint16_t translate(ASTNode_t *rootNode)
   {
     // return (rootNode->data).value;
     printf("WRITE_CONST_INT [%d] [%d] \n", output_reg, (rootNode->data).value);
-  }else if (rootNode->NodeType == NODE_VALUE_REG){
+  }
+  else if (rootNode->NodeType == NODE_VALUE_REG)
+  {
     output_reg = (rootNode->data).reg;
   }
   else if (rootNode->NodeType == NODE_OPERATOR)
@@ -267,7 +271,7 @@ char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
   //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "1 + 3 / ( 4 - 1 ) ;");
+  strcpy(program, "vari = 2 ;");
   //    strcpy(program, "1/+/2/;");
   return program;
 }
@@ -292,7 +296,7 @@ bool is_valid_int(const char *str)
   {
     if (!isspace((unsigned char)*endptr))
     {
-      return false; 
+      return false;
     }
     endptr++;
   }
@@ -384,49 +388,59 @@ ASTNode_t *parse_primary()
     (outputNode->data).value = (int)strtol(cur_token->token, NULL, 10);
     read_pointer++;
     return outputNode;
-  }else if (strstr("()", cur_token->token)) {
+  }
+  else if (strstr("()", cur_token->token))
+  {
     printf("Bracket detected \n");
-    if (strstr("(", cur_token->token)){
+    if (strstr("(", cur_token->token))
+    {
       read_pointer++;
       outputNode = parse_expression();
 
       cur_token = tokenarray->tokenarray_ptr + read_pointer;
-      if (strstr(")", cur_token->token)){
+      if (strstr(")", cur_token->token))
+      {
         printf("Closed brac\n");
         read_pointer++;
         return outputNode;
       }
     }
-  }else if (cur_token->type == VALUE_REG){
+  }
+  else if (cur_token->type == VALUE_REG)
+  {
     outputNode->left = NULL;
     outputNode->right = NULL;
     outputNode->NodeType = NODE_VALUE_REG;
     (outputNode->data).reg = cur_token->reg;
     read_pointer++;
     return outputNode;
-  }else if (cur_token->type == VARIABLE){
-    char varname[10] = cur_token->token;
-    variable_t * new_var;
+  }
+  else if (cur_token->type == VARIABLE)
+  {
+    char varname[10];
+    strcpy(varname, cur_token->token);
+    variable_t *new_var;
     read_pointer++;
     int var_index = -1;
-    for (int i = 0; i < varpool->length;i++){
-      variable_t * var = varpool->varptr + i;
-      if (strcmp(var->name, name){
+    for (int i = 0; i < varpool->length; i++)
+    {
+      variable_t *var = varpool->varptr + i;
+      if (strcmp(var->name, varname)){
         var_index = i;
         break;
       }
     }
-    if (var_index == -1) {
+    if (var_index == -1)
+    {
       printf("INVALID VARIABLE. \n");
-    }else {
+    }
+    else
+    {
       outputNode->left = NULL;
       outputNode->right = NULL;
       outputNode->NodeType = NODE_VALUE_REG;
       (outputNode->data).reg = (varpool->varptr + var_index)->reg;
-
     }
-
-
   }
   else
   {
@@ -448,14 +462,14 @@ ASTNode_t *parse_term()
     NodePool_Length++;
     newNode->left = nextnode;
 
-    if (strstr("/", (tokenarray->tokenarray_ptr + read_pointer -1 )->token))
+    if (strstr("/", (tokenarray->tokenarray_ptr + read_pointer - 1)->token))
     {
       printf("CODE DIVVV \n");
       (newNode->data).op = OPR_DIV;
     }
     else
     {
-      printf("%s\n", (tokenarray->tokenarray_ptr + read_pointer -1)->token);
+      printf("%s\n", (tokenarray->tokenarray_ptr + read_pointer - 1)->token);
       printf("CODE MULL\n");
       newNode->data.op = OPR_MUL;
     }
@@ -473,7 +487,7 @@ ASTNode_t *parse_expression()
   // printf("Read pointer: [%d] Token: [%s] ]]\n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   char *current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
   while (current_token != NULL && strcmp(current_token, ";") != 0 && strstr("+-", current_token))
-  { 
+  {
     ASTNode_t *newNode = ASTNodePool + NodePool_Length;
     NodePool_Length++;
     if (strstr("+", (tokenarray->tokenarray_ptr + read_pointer)->token))
@@ -496,64 +510,70 @@ ASTNode_t *parse_expression()
   return leftnode;
 }
 
-var_pool_t * varpool;
+void parse_statement()
+{ 
 
-void parse_statement(){
-  token_t * current_token = (tokenarray->tokenarray_ptr+read_pointer)->token;
-  if (current_token->type == VARIABLE) {
-    char name[] = current_token->token; 
-    variable_t * new_var;
+  token_t *current_token = (tokenarray->tokenarray_ptr + read_pointer);
+  if (current_token->type == VARIABLE)
+  {
+    printf("In variavle \n");
+    char name[10];
+    strcpy(name, current_token->token);
+    variable_t *new_var;
     read_pointer++;
     int var_index = -1;
-    for (int i = 0; i < varpool->length;i++){
-      variable_t * var = varpool->varptr + i;
-      if (strcmp(var->name, name){
+    for (int i = 0; i < varpool->length; i++)
+    {
+      variable_t *var = varpool->varptr + i;
+      if (strcmp(var->name, name)){
         var_index = i;
         break;
       }
     }
 
-    if (var_index == -1){
-      if (varpool->length == varpool->capacity) {
-        varpool->capacity *=2;
-        varpool->varptr = realloc(varpool->varptr, sizeof(variable_t)*(varpool->capacity));
-
+    if (var_index == -1)
+    {
+      if (varpool->length == varpool->capacity)
+      {
+        varpool->capacity *= 2;
+        varpool->varptr = realloc(varpool->varptr, sizeof(variable_t) * (varpool->capacity));
       }
       new_var = varpool->varptr + varpool->length;
       strcpy(new_var->name, name);
       new_var->reg = last_reg - used_reg_rev;
-
-    }else{
+      used_reg_rev++;
+      varpool->length++;
+      printf("made variable \n");
+    }
+    else
+    {
       new_var = varpool->varptr + var_index;
     }
 
-    current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
-    if (strstr(current_token, "=")) {
+    current_token = (tokenarray->tokenarray_ptr + read_pointer);
+    if (strstr(current_token->token, "="))
+    {
       read_pointer++;
-      ASTNode_t * var_val = ASTNodePool + NodePool_Length;
+      ASTNode_t *var_val = ASTNodePool + NodePool_Length;
       var_val = parse_expression();
       uint16_t res_reg = translate(var_val);
-      printf("OP_LOAD_REG [%d] [ %d]", res_reg,new_var->reg);
-
-
-    }else{  
       
-
+      printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
     }
-
-        
+    else
+    {
+    }
   }
-  
-  if (strstr(";", current_token->token)){
+
+  if (strstr(";", current_token->token))
+  {
     read_pointer++;
     return;
   }
-
 }
 
-ASTNode_t * parse_program(){
-  
-  
+ASTNode_t *parse_program()
+{
 }
 
 void print_ast(ASTNode_t *node, int level)
@@ -603,7 +623,7 @@ int main()
   varpool = malloc(sizeof(var_pool_t));
   varpool->length = 0;
   varpool->capacity = 2;
-  varpool->varptr = malloc(sizeof(variable_t)*2);
+  varpool->varptr = malloc(sizeof(variable_t) * 2);
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader.
   // Also every semicolon and bracket is preceeded and followed by a / and a semicolon signals the end of a command.
   // For the purposes of this demonstration only 2 variables are allowed initially atleast. input and i.
@@ -619,19 +639,26 @@ int main()
   tokenarray = tokenizer(program);
   // For Debugging:
   classifier(tokenarray);
+ 
+    for (int i = 0; i < (tokenarray->length); i++)
+    {
+      // printf("Token Number: %d \n", i);
+      // printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
 
-  for (int i = 0; i < (tokenarray->length); i++)
-  {
-    // printf("Token Number: %d \n", i);
-    // printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
-
-    printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
-  };
-
+      printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
+    };
+  
   //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
   //  translate(parse_expression());
-  ASTNode_t *node_structure = parse_expression();
-  print_ast(node_structure, 0);
-  translate(node_structure);
-  printf("%d \n", output_stream->binstream[1]);
+//  ASTNode_t *node_structure = parse_expression();
+//  print_ast(node_structure, 0);
+//  translate(node_structure);
+  
+  parse_statement();
+
+  for (int i = 0; i < varpool->length; i++)
+  {
+    printf("Variable no: [%d] \n", i + 1);
+    printf("Name: [%s] :: REG: [%d] \n", (varpool->varptr + i)->name, (varpool->varptr + i)->reg);
+  }
 }
