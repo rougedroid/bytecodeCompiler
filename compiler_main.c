@@ -178,7 +178,7 @@ uint16_t translate(ASTNode_t *rootNode)
   output_reg = last_reg - used_reg_rev;
   used_reg_rev += 2;
 
-  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev);
+  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev) ;
 
   if (rootNode->NodeType == NODE_VALUE)
   {
@@ -187,6 +187,7 @@ uint16_t translate(ASTNode_t *rootNode)
   }
   else if (rootNode->NodeType == NODE_VALUE_REG)
   {
+    printf("Register: [%d] \n", (rootNode->data).reg);
     output_reg = (rootNode->data).reg;
   }
   else if (rootNode->NodeType == NODE_OPERATOR)
@@ -283,7 +284,7 @@ char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
   //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "vari = 2 ;");
+  strcpy(program, "vari = 2 ; kali = vari + 3 ; EOF");
   //    strcpy(program, "1/+/2/;");
   return program;
 }
@@ -429,15 +430,17 @@ ASTNode_t *parse_primary()
   }
   else if (cur_token->type == VARIABLE)
   {
+    printf("Got call on var: %s \n", cur_token->token);
     char varname[10];
     strcpy(varname, cur_token->token);
+    printf("Got call on var: %s \n", varname);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
     for (int i = 0; i < varpool->length; i++)
     {
       variable_t *var = varpool->varptr + i;
-      if (strcmp(var->name, varname)){
+      if (strcmp(var->name, varname)==0){
         var_index = i;
         break;
       }
@@ -452,6 +455,7 @@ ASTNode_t *parse_primary()
       outputNode->right = NULL;
       outputNode->NodeType = NODE_VALUE_REG;
       (outputNode->data).reg = (varpool->varptr + var_index)->reg;
+      return outputNode;
     }
   }
   else
@@ -559,23 +563,26 @@ void parse_statement()
   token_t *current_token = (tokenarray->tokenarray_ptr + read_pointer);
   if (current_token->type == VARIABLE)
   {
-    printf("In variavle \n");
+//    printf("In variavle \n");
+    printf("Got call on var*: %s \n", current_token->token);
     char name[10];
     strcpy(name, current_token->token);
+    printf("Got call on var*: %s \n", name);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
     for (int i = 0; i < varpool->length; i++)
     {
       variable_t *var = varpool->varptr + i;
-      if (strcmp(var->name, name)){
+      if (strcmp(var->name, name)==0){
         var_index = i;
         break;
       }
     }
 
     if (var_index == -1)
-    {
+    { 
+      printf("Creating new var: %s\n", name);
       if (varpool->length == varpool->capacity)
       {
         varpool->capacity *= 2;
@@ -586,7 +593,7 @@ void parse_statement()
       new_var->reg = last_reg - used_reg_rev;
       used_reg_rev++;
       varpool->length++;
-      printf("made variable \n");
+  //    printf("made variable \n");
     }
     else
     {
@@ -598,7 +605,9 @@ void parse_statement()
     {
       read_pointer++;
       ASTNode_t *var_val = ASTNodePool + NodePool_Length;
+      NodePool_Length++;
       var_val = parse_expression();
+      printf("Calling Assignment translator \n");
       uint16_t res_reg = translate(var_val);
       
       printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
@@ -762,7 +771,7 @@ int main()
   tokenarray = tokenizer(program);
   // For Debugging:
   classifier(tokenarray);
- 
+ /*
     for (int i = 0; i < (tokenarray->length); i++)
     {
       // printf("Token Number: %d \n", i);
@@ -770,17 +779,18 @@ int main()
 
       printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
     };
-  
+  */
   //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
   //  translate(parse_expression());
 //  ASTNode_t *node_structure = parse_expression();
 //  print_ast(node_structure, 0);
 //  translate(node_structure);
   
-  parse_statement();
+  parse_program();
 
   for (int i = 0; i < varpool->length; i++)
   {
+    printf("Total Length: %d \n", varpool->length);
     printf("Variable no: [%d] \n", i + 1);
     printf("Name: [%s] :: REG: [%d] \n", (varpool->varptr + i)->name, (varpool->varptr + i)->reg);
   }
