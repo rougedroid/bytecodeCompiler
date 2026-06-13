@@ -404,10 +404,34 @@ ASTNode_t *parse_primary()
     (outputNode->data).reg = cur_token->reg;
     read_pointer++;
     return outputNode;
+  }else if (cur_token->type == VARIABLE){
+    char varname[10] = cur_token->token;
+    variable_t * new_var;
+    read_pointer++;
+    int var_index = -1;
+    for (int i = 0; i < varpool->length;i++){
+      variable_t * var = varpool->varptr + i;
+      if (strcmp(var->name, name){
+        var_index = i;
+        break;
+      }
+    }
+    if (var_index == -1) {
+      printf("INVALID VARIABLE. \n");
+    }else {
+      outputNode->left = NULL;
+      outputNode->right = NULL;
+      outputNode->NodeType = NODE_VALUE_REG;
+      (outputNode->data).reg = (varpool->varptr + var_index)->reg;
+
+    }
+
+
   }
   else
   {
-    printf("NON NUMBER IN PARSE PRIMARY. READ POINTER: [%d] \n", read_pointer);
+    printf("RANDOM SHIT IN PARSE PRIMARY. READ POINTER: [%d] \n", read_pointer);
+    printf("%s\n", cur_token->token);
     return NULL;
   }
 }
