@@ -125,24 +125,32 @@ typedef struct ByteStream
   uint16_t *binstream;
 } ByteStream_t;
 
-typedef enum
-{
+typedef enum{
   WRITE_CONST_INT = 0x0020, // OPCODE [REG] [Value] Value is 16 bits so 15 bits of signed int. INT Range = -32768 to +32768.
-  OP_NONE = 0x0000,         // SKIP
-  OP_RETURN = 0x0022,       // OPCODE [REG] Print out [REG]
-  OP_ADD = 0x0024,          // OPCODE [REG 1] [REG 2] -->Store in default regs/stack. --> default addr SMTN. then do
-  OP_LOAD_REG = 0x0025,     // OPCODE [Source REG] [Destination REG]
-  LOAD_REG = 0x0023,        // OPCODE [REG]
-  OP_SUB = 0x0026,          // OPCODE [REG 1] [REG 2] --> again put in default reg. have 1 bit for carry.
-  OP_JUMP = 0x0027,         // OPCODE [REG]
-  OP_CMP = 0x0028,          // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares if both values in REG1 and REG2 are same. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
-  OP_JMP_RELP = 0x0029,     // OPCODE [VALUE] --> Goes forward by value number of bytes. (value must be even number)
-  OP_JMP_RELN = 0x0030,     // OPCODE [VALUE] --> Goes back by value number of bytes. (value must be even)
-  OP_CMP_JMP = 0x0031,      // OPCODE [REG1] [REG2] [JMP] --> jumps JMP number of bytes forward. ( JMP must be even )
-  OP_MUL = 0X0032,          // OPCODE [REG1] [REG2] --> Stored in 0xFFF7 and 0xFFF8
-  OP_DIV = 0x0033,          // OPCODE [REG1] [REG2] --> Store quotent in 0xFFF9 and 0xFFFA ; Remainder in 0xFFFB and 0xFFFC;
+  OP_NONE  = 0x0000, // SKIP
+  OP_RETURN = 0x0022, // OPCODE [REG] Print out [REG]
+  OP_ADD = 0x0024, // OPCODE [REG 1] [REG 2] -->Store in default regs/stack. --> default addr SMTN. then do 
+  OP_LOAD_REG = 0x0025, // OPCODE [Source REG] [Destination REG]
+  LOAD_REG = 0x0023, // OPCODE [REG] 
+  OP_SUB = 0x0026, // OPCODE [REG 1] [REG 2] --> again put in default reg. have 1 bit for carry. 
+  OP_JUMP = 0x0027, // OPCODE [REG]
+  OP_CMP = 0x0028, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares if both values in REG1 and REG2 are same. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer. 
+  OP_JMP_RELP = 0x0029, // OPCODE [VALUE] --> Goes forward by value number of bytes. (value must be even number) 
+  OP_JMP_RELN = 0x0030, // OPCODE [VALUE] --> Goes back by value number of bytes. (value must be even)
+  OP_CMP_JMP = 0x0031, // OPCODE [REG1] [REG2] [JMP] --> jumps JMP number of bytes forward. ( JMP must be even )
+  OP_MUL = 0X0032, // OPCODE [REG1] [REG2] --> Stored in 0xFFF7 and 0xFFF8
+  OP_DIV = 0x0033, // OPCODE [REG1] [REG2] --> Store quotent in 0xFFF9 and 0xFFFA ; Remainder in 0xFFFB and 0xFFFC;
+  OP_CMP_GTR = 0x0034, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_CMP_LSR = 0x0035, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
 
-} Opcodes;
+}Opcodes;
+
+
+typedef struct Logical_Result{
+  uint16_t Opcode;
+  uint16_t reg_left;
+  uint16_t reg_right;
+}logical_result_t;
 
 // Forward Declarations
 ASTNode_t *parse_expression(void);
@@ -510,6 +518,35 @@ ASTNode_t *parse_expression()
   return leftnode;
 }
 
+// Format for if statements:
+// if ((a+b); == (c+d); ) {
+// /// stuffffff
+// }
+
+logical_result_t * parse_logic(){
+  ASTNode_t * left_node = parse_expression();
+  token_t * cur_token = tokenarray->tokenarray_ptr + read_pointer;
+  logical_result_t * result = malloc(sizeof(logical_result_t));
+  if (strstr(cur_token->token, ";")){
+    read_pointer++;
+    cur_token = tokenarray->tokenarray_ptr +read_pointer;
+    if (strstr(cur_token->token, "==")){
+      result->Opcode = OP_CMP;
+
+    }else if(strstr(cur_token->token, ">")){
+      result->Opcode = OP_CMP_GTR;
+    }else if (strstr(cur_token->token, "<")){
+      result->Opcode = OP_CMP_LSR;
+    }
+  }
+  ASTNode_t * right_node = parse_expression();
+
+  result->reg_left = translate(left_node);
+  result->reg_right = translate(right_node);
+  return result;
+  
+}
+
 void parse_statement()
 { 
 
@@ -563,6 +600,34 @@ void parse_statement()
     else
     {
     }
+  }else if (current_token->type == KEYWORD){
+    
+    if (strstr(current_token->token, "if") ){
+      logical_result_t * result;
+      read_pointer++;
+      uint16_t op;
+      current_token = tokenarray->tokenarray_ptr + read_pointer;
+      if (strstr(current_token->token, "(")){
+        // i need parse logic to tell me which comparison op to use and what the two registers are to be compared.
+        result = parse_logic();
+
+        current_token = tokenarray->tokenarray_ptr + read_pointer;
+        if (strstr(current_token, ")")){
+          read_pointer ++;
+
+          current_token = tokenarray->tokenarray_ptr + read_pointer;
+          if (strstr(current_token, "{")){
+            read_pointer++;
+            parse_program();
+
+          }
+        }else{
+          printf("ERROR: Expected ) \n");
+        }
+      }
+    }
+    
+
   }
 
   if (strstr(";", current_token->token))
@@ -572,8 +637,18 @@ void parse_statement()
   }
 }
 
-ASTNode_t *parse_program()
+void *parse_program()
 {
+  token_t * cur_token = tokenarray->tokenarray_ptr + read_pointer;
+
+
+  while (current_token != NULL && strcmp(current_token, "EOF") != 0 && strcmp(current_token, "}" !=0)){
+    parse_statement();
+    cur_token = tokenarray->tokenarray_ptr + read_pointer;
+  }
+  if (strstr(current_token, "}")) {
+    return;
+  }
 }
 
 void print_ast(ASTNode_t *node, int level)
