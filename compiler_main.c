@@ -55,6 +55,8 @@ typedef enum
   L_OPERATOR = 22,
   C_OPERATOR = 23,
   PUNCTUATION = 30,
+  VALUE_REG = 31, 
+
   EOF_Flag = 69,
 } TokenTypes;
 
@@ -77,6 +79,7 @@ typedef struct Token
   char token[10];
   int length;
   int type;
+  uint16_t reg;
 } token_t;
 
 typedef struct TokenArray
@@ -103,6 +106,7 @@ typedef struct ASTNode
   {
     int value;
     int op;
+    uint16_t reg;
   } data;
 } ASTNode_t;
 
@@ -110,6 +114,7 @@ typedef enum
 {
   NODE_VALUE = 10,
   NODE_OPERATOR = 11,
+  NODE_VALUE_REG = 12,
 } Node_Types;
 
 typedef struct ByteStream
@@ -165,6 +170,8 @@ uint16_t translate(ASTNode_t *rootNode)
   {
     // return (rootNode->data).value;
     printf("WRITE_CONST_INT [%d] [%d] \n", output_reg, (rootNode->data).value);
+  }else if (rootNode->NodeType == NODE_VALUE_REG){
+    output_reg = (rootNode->data).reg;
   }
   else if (rootNode->NodeType == NODE_OPERATOR)
   {
@@ -390,6 +397,13 @@ ASTNode_t *parse_primary()
         return outputNode;
       }
     }
+  }else if (cur_token->type == VALUE_REG){
+    outputNode->left = NULL;
+    outputNode->right = NULL;
+    outputNode->NodeType = NODE_VALUE_REG;
+    (outputNode->data).reg = cur_token->reg;
+    read_pointer++;
+    return outputNode;
   }
   else
   {
