@@ -58,6 +58,20 @@ typedef enum
   EOF_Flag = 69,
 } TokenTypes;
 
+typedef struct Variable{
+  char name[10];
+  uint16_t reg;
+  
+}variable_t;
+
+typedef struct VariablePool {
+  int length;
+  int capacity;
+  variable_t * varptr;
+
+}var_pool_t;
+
+
 typedef struct Token
 {
   char token[10];
@@ -444,6 +458,66 @@ ASTNode_t *parse_expression()
   return leftnode;
 }
 
+var_pool_t * varpool;
+
+void parse_statement(){
+  token_t * current_token = (tokenarray->tokenarray_ptr+read_pointer)->token;
+  if (current_token->type == VARIABLE) {
+    char name[] = current_token->token; 
+    variable_t * new_var;
+    read_pointer++;
+    int var_index = -1;
+    for (int i = 0; i < varpool->length;i++){
+      variable_t * var = varpool->varptr + i;
+      if (strcmp(var->name, name){
+        var_index = i;
+        break;
+      }
+    }
+
+    if (var_index == -1){
+      if (varpool->length == varpool->capacity) {
+        varpool->capacity *=2;
+        varpool->varptr = realloc(varpool->varptr, sizeof(variable_t)*(varpool->capacity));
+
+      }
+      new_var = varpool->varptr + varpool->length;
+      strcpy(new_var->name, name);
+      new_var->reg = last_reg - used_reg_rev;
+
+    }else{
+      new_var = varpool->varptr + var_index;
+    }
+
+    current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
+    if (strstr(current_token, "=")) {
+      read_pointer++;
+      ASTNode_t * var_val = ASTNodePool + NodePool_Length;
+      var_val = parse_expression();
+      uint16_t res_reg = translate(var_val);
+      printf("OP_LOAD_REG [%d] [ %d]", res_reg,new_var->reg);
+
+
+    }else{  
+      
+
+    }
+
+        
+  }
+  
+  if (strstr(";", current_token->token)){
+    read_pointer++;
+    return;
+  }
+
+}
+
+ASTNode_t * parse_program(){
+  
+  
+}
+
 void print_ast(ASTNode_t *node, int level)
 {
   if (node == NULL)
@@ -488,6 +562,10 @@ void print_ast(ASTNode_t *node, int level)
 
 int main()
 {
+  varpool = malloc(sizeof(var_pool_t));
+  varpool->length = 0;
+  varpool->capacity = 2;
+  varpool->varptr = malloc(sizeof(variable_t)*2);
   // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader.
   // Also every semicolon and bracket is preceeded and followed by a / and a semicolon signals the end of a command.
   // For the purposes of this demonstration only 2 variables are allowed initially atleast. input and i.
