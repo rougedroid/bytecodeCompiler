@@ -125,34 +125,35 @@ typedef struct ByteStream
   uint16_t *binstream;
 } ByteStream_t;
 
-typedef enum{
+typedef enum
+{
   WRITE_CONST_INT = 0x0020, // OPCODE [REG] [Value] Value is 16 bits so 15 bits of signed int. INT Range = -32768 to +32768.
-  OP_NONE  = 0x0000, // SKIP
-  OP_RETURN = 0x0022, // OPCODE [REG] Print out [REG]
-  OP_ADD = 0x0024, // OPCODE [REG 1] [REG 2] -->Store in default regs/stack. --> default addr SMTN. then do 
-  OP_LOAD_REG = 0x0025, // OPCODE [Source REG] [Destination REG]
-  LOAD_REG = 0x0023, // OPCODE [REG] 
-  OP_SUB = 0x0026, // OPCODE [REG 1] [REG 2] --> again put in default reg. have 1 bit for carry. 
-  OP_JUMP = 0x0027, // OPCODE [REG]
-  OP_CMP = 0x0028, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares if both values in REG1 and REG2 are same. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer. 
-  OP_JMP_RELP = 0x0029, // OPCODE [VALUE] --> Goes forward by value number of bytes. (value must be even number) 
-  OP_JMP_RELN = 0x0030, // OPCODE [VALUE] --> Goes back by value number of bytes. (value must be even)
-  OP_CMP_JMP = 0x0031, // OPCODE [REG1] [REG2] [JMP] --> jumps JMP number of bytes forward. ( JMP must be even )
-  OP_MUL = 0X0032, // OPCODE [REG1] [REG2] --> Stored in 0xFFF7 and 0xFFF8
-  OP_DIV = 0x0033, // OPCODE [REG1] [REG2] --> Store quotent in 0xFFF9 and 0xFFFA ; Remainder in 0xFFFB and 0xFFFC;
-  OP_CMP_GTR = 0x0034, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
-  OP_CMP_LSR = 0x0035, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
-  OP_CMP_GTR_JMP = 0x0036, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
-  OP_CMP_LSR_JMP = 0x0037, // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_NONE = 0x0000,         // SKIP
+  OP_RETURN = 0x0022,       // OPCODE [REG] Print out [REG]
+  OP_ADD = 0x0024,          // OPCODE [REG 1] [REG 2] -->Store in default regs/stack. --> default addr SMTN. then do
+  OP_LOAD_REG = 0x0025,     // OPCODE [Source REG] [Destination REG]
+  LOAD_REG = 0x0023,        // OPCODE [REG]
+  OP_SUB = 0x0026,          // OPCODE [REG 1] [REG 2] --> again put in default reg. have 1 bit for carry.
+  OP_JUMP = 0x0027,         // OPCODE [REG]
+  OP_CMP = 0x0028,          // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares if both values in REG1 and REG2 are same. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_JMP_RELP = 0x0029,     // OPCODE [VALUE] --> Goes forward by value number of bytes. (value must be even number)
+  OP_JMP_RELN = 0x0030,     // OPCODE [VALUE] --> Goes back by value number of bytes. (value must be even)
+  OP_CMP_JMP = 0x0031,      // OPCODE [REG1] [REG2] [JMP] --> jumps JMP number of bytes forward. ( JMP must be even )
+  OP_MUL = 0X0032,          // OPCODE [REG1] [REG2] --> Stored in 0xFFF7 and 0xFFF8
+  OP_DIV = 0x0033,          // OPCODE [REG1] [REG2] --> Store quotent in 0xFFF9 and 0xFFFA ; Remainder in 0xFFFB and 0xFFFC;
+  OP_CMP_GTR = 0x0034,      // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_CMP_LSR = 0x0035,      // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_CMP_GTR_JMP = 0x0036,  // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_CMP_LSR_JMP = 0x0037,  // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
 
-}Opcodes;
+} Opcodes;
 
-
-typedef struct Logical_Result{
+typedef struct Logical_Result
+{
   uint16_t Opcode;
   uint16_t reg_left;
   uint16_t reg_right;
-}logical_result_t;
+} logical_result_t;
 
 // Forward Declarations
 ASTNode_t *parse_expression(void);
@@ -160,6 +161,7 @@ ASTNode_t *parse_term(void);
 ASTNode_t *parse_primary(void);
 void parse_program(void);
 
+void print_ast(ASTNode_t *, int);
 
 int used_reg_rev = 0;
 uint16_t last_reg = 0xFFF0;
@@ -178,7 +180,7 @@ uint16_t translate(ASTNode_t *rootNode)
   output_reg = last_reg - used_reg_rev;
   used_reg_rev += 2;
 
-//  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev) ;
+  //  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev) ;
 
   if (rootNode->NodeType == NODE_VALUE)
   {
@@ -187,7 +189,7 @@ uint16_t translate(ASTNode_t *rootNode)
   }
   else if (rootNode->NodeType == NODE_VALUE_REG)
   {
- //   printf("Register: [%d] \n", (rootNode->data).reg);
+    //   printf("Register: [%d] \n", (rootNode->data).reg);
     output_reg = (rootNode->data).reg;
   }
   else if (rootNode->NodeType == NODE_OPERATOR)
@@ -283,9 +285,10 @@ token_array_t *tokenizer(char *input_text)
 char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
-  //  strcpy(program, "i/=/0/;/input/=/7/;/if/(/input/==/7/)/{/i/=/1/;/}/else/{/i/=/0/;/}//for/(/i/</5/)/{/return/(/i/)/;/i/=/i/+/1/;/}/EOF/(/(/(/(/)/)/)/)");
-  strcpy(program, "vari = 2 ; kali = vari + 3 ; EOF");
+  strcpy(program, "int = 0 ; input = 7 ; if ( ( input ) ; == ( 7 ) ; ) { int = 1 ; } else { int = 0 ; } EOF");
+  //  strcpy(program, "vari = 2 ; kali = vari + 3 ; EOF");
   //    strcpy(program, "1/+/2/;");
+  //    There a a problem with variable names rn, if you use simple names like i then it will fail cuz i also checks out for keywords in the keyword list cuz we are using string matching not making a separate token for it.
   return program;
 }
 
@@ -328,7 +331,7 @@ token_array_t *classifier(token_array_t *tokenarray)
   token_t *token_ptr;
   char token_text[10];
 
-  for (int i = 0; i < (tokenarray->length + 1); i++)
+  for (int i = 0; i < tokenarray->length; i++)
   {
     token_ptr = tokenarray->tokenarray_ptr + i;
     strcpy(token_text, token_ptr->token);
@@ -381,10 +384,6 @@ token_t *peek()
   return (tokenarray->tokenarray_ptr + read_pointer);
 }
 
-void check_break()
-{
-}
-
 ASTNode_t *parse_primary()
 {
   token_t *cur_token;
@@ -392,6 +391,8 @@ ASTNode_t *parse_primary()
 
   ASTNode_t *outputNode = ASTNodePool + NodePool_Length;
   NodePool_Length++;
+//  printf("Primary called: %s \n", cur_token->token);
+  //printf("Primary called type: %d \n", cur_token->type);
 
   if (cur_token->type == VALUE)
   {
@@ -404,7 +405,7 @@ ASTNode_t *parse_primary()
   }
   else if (strstr("()", cur_token->token))
   {
-    //printf("Bracket detected \n");
+    // printf("Bracket detected \n");
     if (strstr("(", cur_token->token))
     {
       read_pointer++;
@@ -413,7 +414,7 @@ ASTNode_t *parse_primary()
       cur_token = tokenarray->tokenarray_ptr + read_pointer;
       if (strstr(")", cur_token->token))
       {
-  //      printf("Closed brac\n");
+        //      printf("Closed brac\n");
         read_pointer++;
         return outputNode;
       }
@@ -430,17 +431,19 @@ ASTNode_t *parse_primary()
   }
   else if (cur_token->type == VARIABLE)
   {
-   // printf("Got call on var: %s \n", cur_token->token);
+  //  printf("Variable called: %s \n", cur_token->token);
+    // printf("Got call on var: %s \n", cur_token->token);
     char varname[10];
     strcpy(varname, cur_token->token);
-//    printf("Got call on var: %s \n", varname);
+    //    printf("Got call on var: %s \n", varname);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
     for (int i = 0; i < varpool->length; i++)
     {
       variable_t *var = varpool->varptr + i;
-      if (strcmp(var->name, varname)==0){
+      if (strcmp(var->name, varname) == 0)
+      {
         var_index = i;
         break;
       }
@@ -451,11 +454,17 @@ ASTNode_t *parse_primary()
     }
     else
     {
-      outputNode->left = NULL;
-      outputNode->right = NULL;
-      outputNode->NodeType = NODE_VALUE_REG;
-      (outputNode->data).reg = (varpool->varptr + var_index)->reg;
-      return outputNode;
+//      printf("Returning output node for : %s \n", varname);
+      ASTNode_t *oNode = malloc(sizeof(ASTNode_t));
+      oNode->left = NULL;
+      oNode->right = NULL;
+      oNode->NodeType = NODE_VALUE_REG;
+      (oNode->data).reg = (varpool->varptr + var_index)->reg;
+  //    printf("Printing onode for %s \n", varname);
+    //  printf("Onode address: %p \n", oNode);
+      //print_ast(oNode, 0);
+//      printf("Done \n");
+      return oNode;
     }
   }
   else
@@ -468,9 +477,7 @@ ASTNode_t *parse_primary()
 
 ASTNode_t *parse_term()
 {
-  ASTNode_t *nextnode = ASTNodePool + NodePool_Length;
-  NodePool_Length++;
-  nextnode = parse_primary();
+  ASTNode_t *nextnode = parse_primary();
   while (strstr("*/", (tokenarray->tokenarray_ptr + read_pointer)->token))
   {
     read_pointer++;
@@ -480,25 +487,29 @@ ASTNode_t *parse_term()
 
     if (strstr("/", (tokenarray->tokenarray_ptr + read_pointer - 1)->token))
     {
-      printf("CODE DIVVV \n");
+      // printf("CODE DIVVV \n");
       (newNode->data).op = OPR_DIV;
     }
     else
     {
-      printf("%s\n", (tokenarray->tokenarray_ptr + read_pointer - 1)->token);
-      printf("CODE MULL\n");
+      //    printf("%s\n", (tokenarray->tokenarray_ptr + read_pointer - 1)->token);
+      //      printf("CODE MULL\n");
       newNode->data.op = OPR_MUL;
     }
     newNode->right = parse_expression();
     newNode->NodeType = NODE_OPERATOR;
     nextnode = newNode;
   }
+
+  //printf("Onode ( in pterm address: %p \n", nextnode);
+//  print_ast(nextnode, 0);
+//  printf("Done \n");
   return nextnode;
 }
 ASTNode_t *parse_expression()
 {
 
-  //printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
+  // printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   ASTNode_t *leftnode = parse_term();
   // printf("Read pointer: [%d] Token: [%s] ]]\n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   char *current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
@@ -531,58 +542,83 @@ ASTNode_t *parse_expression()
 // /// stuffffff
 // }
 
-logical_result_t * parse_logic(){
-  ASTNode_t * left_node = parse_expression();
-  token_t * cur_token = tokenarray->tokenarray_ptr + read_pointer;
-  logical_result_t * result = malloc(sizeof(logical_result_t));
-  if (strstr(cur_token->token, ";")){
+logical_result_t *parse_logic()
+{
+  ASTNode_t *left_node = parse_expression();
+  print_ast(left_node, 0);
+  token_t *cur_token = tokenarray->tokenarray_ptr + read_pointer;
+  logical_result_t *result = malloc(sizeof(logical_result_t));
+  if (strstr(cur_token->token, ";"))
+  {
+   // printf("Got left node \n");
     read_pointer++;
-    cur_token = tokenarray->tokenarray_ptr +read_pointer;
-    if (strstr(cur_token->token, "==")){
+    cur_token = tokenarray->tokenarray_ptr + read_pointer;
+    read_pointer++;
+    if (strstr(cur_token->token, "=="))
+    {
       result->Opcode = OP_CMP;
-
-    }else if(strstr(cur_token->token, ">")){
+     // printf("Got == op \n");
+    }
+    else if (strstr(cur_token->token, ">"))
+    {
+     // printf("Got > op \n");
       result->Opcode = OP_CMP_GTR;
-    }else if (strstr(cur_token->token, "<")){
+    }
+    else if (strstr(cur_token->token, "<"))
+    {
+     // printf("Got < op \n");
       result->Opcode = OP_CMP_LSR;
     }
-  }else{
+  }
+  else
+  {
     printf("Expected ; After if ((..) \n");
   }
-  ASTNode_t * right_node = parse_expression();
-
-  result->reg_left = translate(left_node);
-  result->reg_right = translate(right_node);
-  return result;
+  ASTNode_t *right_node = parse_expression();
+ // printf("Got right node \n");
   
+  cur_token = tokenarray->tokenarray_ptr + read_pointer;
+  if (strcmp(cur_token->token, ";")==0){
+    read_pointer++;
+  }else {
+    printf("Expected ; but got: %s \n", cur_token->token);
+  }
+  result->reg_right = translate(right_node);
+//  printf("Got right translate \n");
+//  print_ast(left_node, 0);
+//  printf("AST Printed \n");
+  result->reg_left = translate(left_node);
+//  printf("Left translate done \n");
+  return result;
 }
 
 void parse_statement()
-{ 
+{
 
   token_t *current_token = (tokenarray->tokenarray_ptr + read_pointer);
   if (current_token->type == VARIABLE)
   {
-//    printf("In variavle \n");
-  //  printf("Got call on var*: %s \n", current_token->token);
+    //    printf("In variavle \n");
+    //  printf("Got call on var*: %s \n", current_token->token);
     char name[10];
     strcpy(name, current_token->token);
-  //  printf("Got call on var*: %s \n", name);
+    //  printf("Got call on var*: %s \n", name);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
     for (int i = 0; i < varpool->length; i++)
     {
       variable_t *var = varpool->varptr + i;
-      if (strcmp(var->name, name)==0){
+      if (strcmp(var->name, name) == 0)
+      {
         var_index = i;
         break;
       }
     }
 
     if (var_index == -1)
-    { 
-//      printf("Creating new var: %s\n", name);
+    {
+      //      printf("Creating new var: %s\n", name);
       if (varpool->length == varpool->capacity)
       {
         varpool->capacity *= 2;
@@ -593,7 +629,7 @@ void parse_statement()
       new_var->reg = last_reg - used_reg_rev;
       used_reg_rev++;
       varpool->length++;
-  //    printf("made variable \n");
+      //    printf("made variable \n");
     }
     else
     {
@@ -607,84 +643,100 @@ void parse_statement()
       ASTNode_t *var_val = ASTNodePool + NodePool_Length;
       NodePool_Length++;
       var_val = parse_expression();
-    //  printf("Calling Assignment translator \n");
+      //  printf("Calling Assignment translator \n");
       uint16_t res_reg = translate(var_val);
-      
+
       printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
     }
     else
     {
     }
-  }else if (current_token->type == KEYWORD){
-    
-    if (strstr(current_token->token, "if") ){
-      logical_result_t * result;
+  }
+  else if (current_token->type == KEYWORD)
+  {
+
+    if (strstr(current_token->token, "if"))
+    {
+    //  printf("If statement start \n");
+      logical_result_t *result;
       read_pointer++;
       uint16_t op;
       int jmpat;
       int initlen;
       int jmp_else_index;
       current_token = tokenarray->tokenarray_ptr + read_pointer;
-      if (strstr(current_token->token, "(")){
+      if (strstr(current_token->token, "("))
+      {
+        read_pointer++;
+    //    printf("Calling parse logic \n");
         // i need parse logic to tell me which comparison op to use and what the two registers are to be compared.
         result = parse_logic();
+        op = result->Opcode;
+      //  printf("Parse logic finished \n");
 
         current_token = tokenarray->tokenarray_ptr + read_pointer;
-        if (strstr(current_token->token, ")")){
+        if (strstr(current_token->token, ")"))
+        {
 
-          read_pointer ++;
+          read_pointer++;
 
           current_token = tokenarray->tokenarray_ptr + read_pointer;
           jmpat = output_stream->length + 5;
-          switch (op){
-            case OP_CMP_JMP:
-              printf("OP_CMP_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-              break;
-            case OP_CMP_GTR_JMP:
-              printf("OP_CMP_GTR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+          switch (op)
+          {
+          case OP_CMP_JMP:
+            printf("OP_CMP_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+            break;
+          case OP_CMP_GTR_JMP:
+            printf("OP_CMP_GTR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
 
-              break;
-            case OP_CMP_LSR_JMP:
-              printf("OP_CMP_LSR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-              break;
-            default:
-              printf("OP_NONE OP_NONE OP_NONE OP_NONE \n");
+            break;
+          case OP_CMP_LSR_JMP:
+            printf("OP_CMP_LSR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+            break;
+          default:
+            printf("OP_NONE OP_NONE OP_NONE OP_NONE \n");
+            printf("Got opcode: %d \n", op);
           }
-          if (strstr(current_token->token, "{")){
+          if (strstr(current_token->token, "{"))
+          {
             read_pointer++;
             initlen = output_stream->length;
-            parse_program(); // this will also write out the code for + if condition. 
+            parse_program(); // this will also write out the code for + if condition.
             jmp_else_index = output_stream->length + 1;
             printf("OP_JMP_RELP [%d] \n", 0xABCD);
-            output_stream->binstream[jmpat] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig 
+            output_stream->binstream[jmpat] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
             current_token = tokenarray->tokenarray_ptr + read_pointer;
-            if (strstr(current_token->token, "}")){
+            if (strstr(current_token->token, "}"))
+            {
               read_pointer++;
               current_token = tokenarray->tokenarray_ptr + read_pointer;
-              if (strstr(current_token->token, "else")){
-                if (strstr(current_token->token, "{")){
+              if (strstr(current_token->token, "else"))
+              {
+                if (strstr(current_token->token, "{"))
+                {
                   read_pointer++;
                   initlen = output_stream->length;
-                  parse_program(); // this will also write out the code for + if condition. 
-                  output_stream->binstream[jmp_else_index] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig 
+                  parse_program();                                                            // this will also write out the code for + if condition.
+                  output_stream->binstream[jmp_else_index] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
                   current_token = tokenarray->tokenarray_ptr + read_pointer;
-                  if (strstr(current_token->token, "}")){
+                  if (strstr(current_token->token, "}"))
+                  {
                     read_pointer++;
                     return;
                   }
                 }
               }
-              
             }
-
           }
-        }else{
-          printf("ERROR: Expected ) \n");
+        }
+        else
+        {
+          printf("ERROR: Expected ) instead got: %s  \n", current_token->token);
+
         }
       }
     }
-    
-
   }
 
   if (strstr(";", current_token->token))
@@ -696,14 +748,15 @@ void parse_statement()
 
 void parse_program()
 {
-  token_t * cur_token = tokenarray->tokenarray_ptr + read_pointer;
+  token_t *cur_token = tokenarray->tokenarray_ptr + read_pointer;
 
-
-  while (cur_token != NULL && strcmp(cur_token->token, "EOF") != 0 && strcmp(cur_token->token, "}") !=0){
+  while (cur_token != NULL && strcmp(cur_token->token, "EOF") != 0 && strcmp(cur_token->token, "}") != 0)
+  {
     parse_statement();
     cur_token = tokenarray->tokenarray_ptr + read_pointer;
   }
-  if (strstr(cur_token->token, "}")) {
+  if (strstr(cur_token->token, "}"))
+  {
     return;
   }
 }
@@ -711,7 +764,10 @@ void parse_program()
 void print_ast(ASTNode_t *node, int level)
 {
   if (node == NULL)
+  {
+    printf("NULL Node \n");
     return;
+  }
   // Print indentation based on current tree depth
   for (int i = 0; i < level; i++)
   {
@@ -744,6 +800,10 @@ void print_ast(ASTNode_t *node, int level)
     }
     printf("[OP: %c]\n", op_char);
   }
+  else
+  {
+    printf("Node type: %d \n", node->NodeType);
+  }
 
   // Recursively print children, stepping up the indentation level
   print_ast(node->left, level + 1);
@@ -771,21 +831,17 @@ int main()
   tokenarray = tokenizer(program);
   // For Debugging:
   classifier(tokenarray);
- /*
-    for (int i = 0; i < (tokenarray->length); i++)
-    {
-      // printf("Token Number: %d \n", i);
-      // printf("Token String: %s \n", (tokenarray->tokenarray_ptr + i)->token);
-
-      printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
-    };
-  */
+  /*
+  for (int i = 0; i < tokenarray->length; i++)
+  {
+    printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
+  } */
   //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
   //  translate(parse_expression());
-//  ASTNode_t *node_structure = parse_expression();
-//  print_ast(node_structure, 0);
-//  translate(node_structure);
-  
+  //  ASTNode_t *node_structure = parse_expression();
+  //  print_ast(node_structure, 0);
+  //  translate(node_structure);
+
   parse_program();
 
   printf("Total Variables: %d \n", varpool->length);
