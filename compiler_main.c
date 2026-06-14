@@ -178,7 +178,7 @@ uint16_t translate(ASTNode_t *rootNode)
   output_reg = last_reg - used_reg_rev;
   used_reg_rev += 2;
 
-  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev) ;
+//  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev) ;
 
   if (rootNode->NodeType == NODE_VALUE)
   {
@@ -187,7 +187,7 @@ uint16_t translate(ASTNode_t *rootNode)
   }
   else if (rootNode->NodeType == NODE_VALUE_REG)
   {
-    printf("Register: [%d] \n", (rootNode->data).reg);
+ //   printf("Register: [%d] \n", (rootNode->data).reg);
     output_reg = (rootNode->data).reg;
   }
   else if (rootNode->NodeType == NODE_OPERATOR)
@@ -404,7 +404,7 @@ ASTNode_t *parse_primary()
   }
   else if (strstr("()", cur_token->token))
   {
-    printf("Bracket detected \n");
+    //printf("Bracket detected \n");
     if (strstr("(", cur_token->token))
     {
       read_pointer++;
@@ -413,7 +413,7 @@ ASTNode_t *parse_primary()
       cur_token = tokenarray->tokenarray_ptr + read_pointer;
       if (strstr(")", cur_token->token))
       {
-        printf("Closed brac\n");
+  //      printf("Closed brac\n");
         read_pointer++;
         return outputNode;
       }
@@ -430,10 +430,10 @@ ASTNode_t *parse_primary()
   }
   else if (cur_token->type == VARIABLE)
   {
-    printf("Got call on var: %s \n", cur_token->token);
+   // printf("Got call on var: %s \n", cur_token->token);
     char varname[10];
     strcpy(varname, cur_token->token);
-    printf("Got call on var: %s \n", varname);
+//    printf("Got call on var: %s \n", varname);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
@@ -498,7 +498,7 @@ ASTNode_t *parse_term()
 ASTNode_t *parse_expression()
 {
 
-  printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
+  //printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   ASTNode_t *leftnode = parse_term();
   // printf("Read pointer: [%d] Token: [%s] ]]\n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   char *current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
@@ -564,10 +564,10 @@ void parse_statement()
   if (current_token->type == VARIABLE)
   {
 //    printf("In variavle \n");
-    printf("Got call on var*: %s \n", current_token->token);
+  //  printf("Got call on var*: %s \n", current_token->token);
     char name[10];
     strcpy(name, current_token->token);
-    printf("Got call on var*: %s \n", name);
+  //  printf("Got call on var*: %s \n", name);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
@@ -582,7 +582,7 @@ void parse_statement()
 
     if (var_index == -1)
     { 
-      printf("Creating new var: %s\n", name);
+//      printf("Creating new var: %s\n", name);
       if (varpool->length == varpool->capacity)
       {
         varpool->capacity *= 2;
@@ -607,7 +607,7 @@ void parse_statement()
       ASTNode_t *var_val = ASTNodePool + NodePool_Length;
       NodePool_Length++;
       var_val = parse_expression();
-      printf("Calling Assignment translator \n");
+    //  printf("Calling Assignment translator \n");
       uint16_t res_reg = translate(var_val);
       
       printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
@@ -788,9 +788,9 @@ int main()
   
   parse_program();
 
+  printf("Total Variables: %d \n", varpool->length);
   for (int i = 0; i < varpool->length; i++)
   {
-    printf("Total Length: %d \n", varpool->length);
     printf("Variable no: [%d] \n", i + 1);
     printf("Name: [%s] :: REG: [%d] \n", (varpool->varptr + i)->name, (varpool->varptr + i)->reg);
   }
