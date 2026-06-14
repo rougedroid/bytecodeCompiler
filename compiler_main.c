@@ -286,7 +286,7 @@ char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
 //  strcpy(program, "int = 0 ; input = 7 ; if ( ( input ) ; == ( 7 ) ; ) { int = 1 ; } else { int = 0 ; } EOF");
-  strcpy(program, "int = 0 ; while ( ( int ) ; < ( 3 ) ; ) { int = int + 1 ; } return ( int ) EOF");
+  strcpy(program, "int = 0 ; while ( ( int ) ; < ( 3 ) ; ) { int = int + 1 ; } return ( ( int ) ; ) EOF");
   //  strcpy(program, "vari = 2 ; kali = vari + 3 ; EOF");
   //    strcpy(program, "1/+/2/;");
   //    There a a problem with variable names rn, if you use simple names like i then it will fail cuz i also checks out for keywords in the keyword list cuz we are using string matching not making a separate token for it.
@@ -764,13 +764,13 @@ void parse_statement()
         read_pointer++;
         ASTNode_t * return_val = parse_expression();
         uint16_t return_reg = translate(return_val);
-
+        // use: return ( ( val ) ; ) ;
         current_token = tokenarray->tokenarray_ptr + read_pointer;
         if (strstr(current_token->token, ";")){
           read_pointer++;
           printf("OP_RETURN [%d] \n", return_reg );
         }else {
-          printf("Expected ; but got \n", current_token->token);
+          printf("Expected ; but got %s \n", current_token->token);
         }
 
 
@@ -831,13 +831,13 @@ void parse_statement()
             read_pointer++;
             initlen = rand_stream->length;
             parse_program(); // this will also write out the code for + if condition.
-            rand_stream->length += 6; // assuming if condition is 6*2 bytes long.
+            rand_stream->length += 12; // assuming if condition is 6*2 bytes long.
             jmp_else_index = rand_stream->length + 1;
             printf("OP_JMP_RELN [%d] \n", 0xABCD);
             rand_stream->length += 2;
             rand_stream->binstream[jmpat] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-            printf("Changed (for going to else block) jump 1* to %d bytes \n", rand_stream->length-initlen);
-            printf("Changing jump length for loop jump to %d bytes \n", rand_stream->length - jmp_else_index); // Need to check this.
+            printf("Changed (for escaping while ) jump 1* to %d bytes \n", rand_stream->length-initlen);
+            printf("Changing - ve jump length for loop jump to %d bytes \n", rand_stream->length - initlen + 4); // Need to check this.
             current_token = tokenarray->tokenarray_ptr + read_pointer;
             if (strstr(current_token->token, "}"))
             {
