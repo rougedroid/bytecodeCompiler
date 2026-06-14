@@ -161,7 +161,7 @@ ASTNode_t *parse_term(void);
 ASTNode_t *parse_primary(void);
 void parse_program(void);
 
-void (ASTNode_t *, int);
+void print_ast(ASTNode_t *, int);
 
 int used_reg_rev = 0;
 uint16_t last_reg = 0xFFF0;
@@ -285,7 +285,8 @@ token_array_t *tokenizer(char *input_text)
 char *load_code(char *program)
 {
   // This is placeholder code. Put code to actually read from file.
-  strcpy(program, "int = 0 ; input = 7 ; if ( ( input ) ; == ( 7 ) ; ) { int = 1 ; } else { int = 0 ; } EOF");
+//  strcpy(program, "int = 0 ; input = 7 ; if ( ( input ) ; == ( 7 ) ; ) { int = 1 ; } else { int = 0 ; } EOF");
+  strcpy(program, "int = 0 ; while ( ( int ) ; < ( 3 ) ; ) { int = int + 1 ; } return ( int ) EOF");
   //  strcpy(program, "vari = 2 ; kali = vari + 3 ; EOF");
   //    strcpy(program, "1/+/2/;");
   //    There a a problem with variable names rn, if you use simple names like i then it will fail cuz i also checks out for keywords in the keyword list cuz we are using string matching not making a separate token for it.
@@ -763,7 +764,15 @@ void parse_statement()
         read_pointer++;
         ASTNode_t * return_val = parse_expression();
         uint16_t return_reg = translate(return_val);
-        printf("OP_RETURN [%d] \n", return_reg );
+
+        current_token = tokenarray->tokenarray_ptr + read_pointer;
+        if (strstr(current_token->token, ";")){
+          read_pointer++;
+          printf("OP_RETURN [%d] \n", return_reg );
+        }else {
+          printf("Expected ; but got \n", current_token->token);
+        }
+
 
       }else {
         printf("Expected ( but got %s\n", current_token->token);
