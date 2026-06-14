@@ -849,9 +849,9 @@ int main()
   char *program = malloc(sizeof(char) * 500);
   load_code(program);
   tokenarray = tokenizer(program);
-  // For Debugging:
   classifier(tokenarray);
   /*
+  // For Debugging:
   for (int i = 0; i < tokenarray->length; i++)
   {
     printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
