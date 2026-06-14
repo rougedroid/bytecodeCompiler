@@ -161,7 +161,7 @@ ASTNode_t *parse_term(void);
 ASTNode_t *parse_primary(void);
 void parse_program(void);
 
-void print_ast(ASTNode_t *, int);
+void (ASTNode_t *, int);
 
 int used_reg_rev = 0;
 uint16_t last_reg = 0xFFF0;
@@ -745,6 +745,122 @@ void parse_statement()
               }else {
                 printf("Expected 'else' but got '%s' \n", current_token->token);
               }
+            }else {
+              printf("Expected } but got %s \n", current_token->token);
+            }
+          }
+        }
+        else
+        {
+          printf("ERROR: Expected ) instead got: %s  \n", current_token->token);
+
+        }
+      }
+    }else if (strstr(current_token->token, "return")){
+      read_pointer++;
+      current_token = tokenarray->tokenarray_ptr + read_pointer;
+      if (strstr(current_token->token, "(")){
+        read_pointer++;
+        ASTNode_t * return_val = parse_expression();
+        uint16_t return_reg = translate(return_val);
+        printf("OP_RETURN [%d] \n", return_reg );
+
+      }else {
+        printf("Expected ( but got %s\n", current_token->token);
+      }
+
+
+    }else if (strstr(current_token->token, "while"))
+    {
+    //  printf("If statement start \n");
+      logical_result_t *result;
+      read_pointer++;
+      uint16_t op;
+      int jmpat;
+      int initlen;
+      int jmp_else_index;
+      current_token = tokenarray->tokenarray_ptr + read_pointer;
+      if (strstr(current_token->token, "("))
+      {
+        read_pointer++;
+    //    printf("Calling parse logic \n");
+        // i need parse logic to tell me which comparison op to use and what the two registers are to be compared.
+        result = parse_logic();
+        op = result->Opcode;
+      //  printf("Parse logic finished \n");
+
+        current_token = tokenarray->tokenarray_ptr + read_pointer;
+        if (strstr(current_token->token, ")"))
+        {
+          ByteStream_t * rand_stream = malloc(sizeof(ByteStream_t));
+          rand_stream->binstream = malloc(sizeof(uint16_t)*1000);
+          read_pointer++;
+          rand_stream->length = 10; // check val, need to update to put in bin instead of printing later tho. 
+          current_token = tokenarray->tokenarray_ptr + read_pointer;
+          jmpat = rand_stream->length + 5;
+          switch (op)
+          {
+          case OP_CMP_JMP:
+            printf("OP_CMP_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+            rand_stream->length += 4;
+            break;
+          case OP_CMP_GTR_JMP:
+            printf("OP_CMP_GTR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+            rand_stream->length +=4;
+            break;
+          case OP_CMP_LSR_JMP:
+            printf("OP_CMP_LSR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
+            rand_stream->length +=4;
+            break;
+          default:
+            printf("OP_NONE OP_NONE OP_NONE OP_NONE \n");
+            rand_stream->length +=4;
+            printf("Got opcode: %d \n", op);
+          }
+          if (strstr(current_token->token, "{"))
+          {
+            read_pointer++;
+            initlen = rand_stream->length;
+            parse_program(); // this will also write out the code for + if condition.
+            rand_stream->length += 6; // assuming if condition is 6*2 bytes long.
+            jmp_else_index = rand_stream->length + 1;
+            printf("OP_JMP_RELN [%d] \n", 0xABCD);
+            rand_stream->length += 2;
+            rand_stream->binstream[jmpat] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+            printf("Changed (for going to else block) jump 1* to %d bytes \n", rand_stream->length-initlen);
+            printf("Changing jump length for loop jump to %d bytes \n", rand_stream->length - jmp_else_index); // Need to check this.
+            current_token = tokenarray->tokenarray_ptr + read_pointer;
+            if (strstr(current_token->token, "}"))
+            {
+              read_pointer++;
+              current_token = tokenarray->tokenarray_ptr + read_pointer;
+              // if (strstr(current_token->token, "else"))
+              // {
+              //   read_pointer++;
+              //   current_token = tokenarray->tokenarray_ptr + read_pointer;
+              //   if (strstr(current_token->token, "{"))
+              //   {
+              //     read_pointer++;
+              //     initlen = rand_stream->length;
+              //     parse_program();     // this will also write out the code for + if condition.
+              //     rand_stream->length += 6; // assuming parse program length is 6*2 bytes.....
+              //     rand_stream->binstream[jmp_else_index] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+              //     printf("Changed jump (to jump the else blok after if ) 1 to %d bytes \n", rand_stream->length-initlen);
+              //     current_token = tokenarray->tokenarray_ptr + read_pointer;
+              //     if (strstr(current_token->token, "}"))
+              //     {
+              //       read_pointer++;
+              //       return;
+              //     }else {
+                    
+              //       printf("Expected '}' but got '%s' \n", current_token->token);
+              //     }
+                // }else {
+                //   printf("Expected '{' * but got '%s' \n", current_token->token);
+                // }
+              // }else {
+              //   printf("Expected 'else' but got '%s' \n", current_token->token);
+              // }
             }else {
               printf("Expected } but got %s \n", current_token->token);
             }
