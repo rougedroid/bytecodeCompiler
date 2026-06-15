@@ -179,26 +179,37 @@ uint16_t translate(ASTNode_t *rootNode)
       printf("OP_ADD [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF1] [%d] \n", output_reg);
       uint16_t instruction_set_1[6] = {OP_ADD, left_reg, right_reg, OP_LOAD_REG, 0xFFF1, output_reg};
+
       offset = output_stream->length;
       write_ptr = output_stream->binstream + offset;
+
       memcpy(write_ptr, instruction_set_1, sizeof(instruction_set_1));
+      output_stream->length += 6;
+
       break;
 
     case OPR_SUB:
       printf("OP_SUB [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF3] [%d] \n", output_reg);
       uint16_t instruction_set_2[6] = {OP_SUB, left_reg, right_reg, OP_LOAD_REG, 0xFFF3, output_reg};
+      
       offset = output_stream->length;
       write_ptr = output_stream->binstream + offset;
+
       memcpy(write_ptr, instruction_set_2, sizeof(instruction_set_2));
+      output_stream->length+=6;
+
       break;
     case OPR_MUL:
       printf("OP_MUL [%d] [%d] \n", left_reg, right_reg);
       printf("OP_LOAD_REG [0xFFF7] [%d] \n", output_reg);
       uint16_t instruction_set_3[6] = {OP_MUL, left_reg, right_reg, OP_LOAD_REG, 0xFFF7, output_reg};
+      
       offset = output_stream->length;
       write_ptr = output_stream->binstream + offset;
+
       memcpy(write_ptr, instruction_set_3, sizeof(instruction_set_3));
+      output_stream += 6;
       break;
     case OPR_DIV:
       printf("OP_DIV [%d] [%d] \n", left_reg, right_reg);
@@ -207,6 +218,7 @@ uint16_t translate(ASTNode_t *rootNode)
       offset = output_stream->length;
       write_ptr = output_stream->binstream + offset;
       memcpy(write_ptr, instruction_set_4, sizeof(instruction_set_4));
+      output_stream->length += 6;
       break;
     default:
       printf("OP_NONE \n");
@@ -214,6 +226,7 @@ uint16_t translate(ASTNode_t *rootNode)
       offset = output_stream->length;
       write_ptr = output_stream->binstream + offset;
       memcpy(write_ptr, instruction_set_5, sizeof(instruction_set_5));
+      output_stream->length++;
     }
   }
 
@@ -628,6 +641,13 @@ void parse_statement()
       uint16_t res_reg = translate(var_val);
 
       printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
+      uint16_t instruction_set = {OP_LOAD_REG, res_reg, new_var->reg};
+      int offset = output_stream->length;
+      uint16_t * write_ptr = output_stream->binstream + offset;
+      memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+      output_stream->length+=3;
+
+
     }
     else
     {
@@ -654,42 +674,63 @@ void parse_statement()
         current_token = tokenarray->tokenarray_ptr + read_pointer;
         if (strstr(current_token->token, ")"))
         {
-          ByteStream_t * rand_stream = malloc(sizeof(ByteStream_t));
-          rand_stream->binstream = malloc(sizeof(uint16_t)*1000);
+          
+          
           read_pointer++;
-          rand_stream->length = 10; // check val, need to update to put in bin instead of printing later tho. 
+          
           current_token = tokenarray->tokenarray_ptr + read_pointer;
-          jmpat = rand_stream->length + 5;
+          jmpat = output_stream->length + 5;
           switch (op)
           {
           case OP_CMP_JMP:
             printf("OP_CMP_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-            rand_stream->length += 4;
+            uint16_t instruction_set = {OP_CMP_JMP, result->reg_left, result->reg_right, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length+=4;
+            
             break;
           case OP_CMP_GTR_JMP:
             printf("OP_CMP_GTR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-            rand_stream->length +=4;
+            uint16_t instruction_set = {OP_CMP_GTR_JMP, result->reg_left, result->reg_right, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length+=4;
+            
             break;
           case OP_CMP_LSR_JMP:
             printf("OP_CMP_LSR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-            rand_stream->length +=4;
+            uint16_t instruction_set = {OP_CMP_LSR_JMP, result->reg_left, result->reg_right, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length+=4;
+            
             break;
           default:
-            printf("OP_NONE OP_NONE OP_NONE OP_NONE \n");
-            rand_stream->length +=4;
+            printf("Unknown comparison operator used \n");
+            
             printf("Got opcode: %d \n", op);
           }
           if (strstr(current_token->token, "{"))
           {
             read_pointer++;
-            initlen = rand_stream->length;
+            initlen = output_stream->length;
             parse_program(); // this will also write out the code for + if condition.
-            rand_stream->length += 6; // assuming if condition is 6*2 bytes long.
-            jmp_else_index = rand_stream->length + 1;
+            output_stream->length += 6; // assuming if condition is 6*2 bytes long.
+            jmp_else_index = output_stream->length + 1;
             printf("OP_JMP_RELP [%d] \n", 0xABCD);
-            rand_stream->length += 2;
-            rand_stream->binstream[jmpat] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-            printf("Changed (for going to else block) jump 1* to %d bytes \n", rand_stream->length-initlen);
+            uint16_t instruction_set = {OP_JMP_RELP, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            
+            
+            output_stream->length += 2;
+            output_stream->binstream[jmpat] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+            printf("Changed (for going to else block) jump 1* to %d bytes \n", output_stream->length-initlen);
             current_token = tokenarray->tokenarray_ptr + read_pointer;
             if (strstr(current_token->token, "}"))
             {
@@ -702,11 +743,11 @@ void parse_statement()
                 if (strstr(current_token->token, "{"))
                 {
                   read_pointer++;
-                  initlen = rand_stream->length;
+                  initlen = output_stream->length;
                   parse_program();     // this will also write out the code for + if condition.
-                  rand_stream->length += 6; // assuming parse program length is 6*2 bytes.....
-                  rand_stream->binstream[jmp_else_index] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-                  printf("Changed jump (to jump the else blok after if ) 1 to %d bytes \n", rand_stream->length-initlen);
+                  output_stream->length += 6; // assuming parse program length is 6*2 bytes.....
+                  output_stream->binstream[jmp_else_index] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+                  printf("Changed jump (to jump the else blok after if ) 1 to %d bytes \n", output_stream->length-initlen);
                   current_token = tokenarray->tokenarray_ptr + read_pointer;
                   if (strstr(current_token->token, "}"))
                   {
@@ -745,6 +786,11 @@ void parse_statement()
         if (strstr(current_token->token, ";")){
           read_pointer++;
           printf("OP_RETURN [%d] \n", return_reg );
+          uint16_t instruction_set = {OP_RETURN, return_reg};
+          int offset = output_stream->length;
+          uint16_t * write_ptr = output_stream->binstream + offset;
+          memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+          output_stream->length++;
         }else {
           printf("Expected ; but got %s \n", current_token->token);
         }
@@ -773,43 +819,58 @@ void parse_statement()
         current_token = tokenarray->tokenarray_ptr + read_pointer;
         if (strstr(current_token->token, ")"))
         {
-          ByteStream_t * rand_stream = malloc(sizeof(ByteStream_t));
-          rand_stream->binstream = malloc(sizeof(uint16_t)*1000);
+          
           read_pointer++;
-          rand_stream->length = 10; // check val, need to update to put in bin instead of printing later tho. 
+          
           current_token = tokenarray->tokenarray_ptr + read_pointer;
-          jmpat = rand_stream->length + 5;
+          jmpat = output_stream->length + 5;
           switch (op)
           {
           case OP_CMP_JMP:
             printf("OP_CMP_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-            rand_stream->length += 4;
+            uint16_t instruction_set = {OP_CMP_JMP, result->reg_left, result->reg_right, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length += 4;
             break;
           case OP_CMP_GTR_JMP:
             printf("OP_CMP_GTR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-            rand_stream->length +=4;
+            uint16_t instruction_set = {OP_CMP_GTR_JMP, result->reg_left, result->reg_right, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length +=4;
             break;
           case OP_CMP_LSR_JMP:
             printf("OP_CMP_LSR_JMP [%d] [%d] [%d]\n", result->reg_left, result->reg_right, 0xABCD);
-            rand_stream->length +=4;
+            uint16_t instruction_set = {OP_CMP_LSR_JMP, result->reg_left, result->reg_right, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length +=4;
             break;
           default:
-            printf("OP_NONE OP_NONE OP_NONE OP_NONE \n");
-            rand_stream->length +=4;
+            printf("Got unknows comparison operator. \n");
+            
             printf("Got opcode: %d \n", op);
           }
           if (strstr(current_token->token, "{"))
           {
             read_pointer++;
-            initlen = rand_stream->length;
+            initlen = output_stream->length;
             parse_program(); // this will also write out the code for + if condition.
-            rand_stream->length += 12; // assuming if condition is 6*2 bytes long.
-            jmp_else_index = rand_stream->length + 1;
+            output_stream->length += 12; // assuming if condition is 6*2 bytes long.
+            jmp_else_index = output_stream->length + 1;
             printf("OP_JMP_RELN [%d] \n", 0xABCD);
-            rand_stream->length += 2;
-            rand_stream->binstream[jmpat] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-            printf("Changed (for escaping while ) jump 1* to %d bytes \n", rand_stream->length-initlen);
-            printf("Changing - ve jump length for loop jump to %d bytes \n", rand_stream->length - initlen + 4); // Need to check this.
+            uint16_t instruction_set[] = {OP_JMP_RELN, 0x0000};
+            int offset = output_stream->length;
+            uint16_t * write_ptr = output_stream->binstream + offset;
+            memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+            output_stream->length += 2;
+            output_stream->binstream[jmpat] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+            printf("Changed (for escaping while ) jump 1* to %d bytes \n", output_stream->length-initlen);
+            printf("Changing - ve jump length for loop jump to %d bytes \n", output_stream->length - initlen + 4); // Need to check this.
             current_token = tokenarray->tokenarray_ptr + read_pointer;
             if (strstr(current_token->token, "}"))
             {
