@@ -1,9 +1,2 @@
-int = 0;
-input = 3;
-output = 0;
-if ((int);<(input+3);){
-    output = 2;
-}else {
-    output = 3;
-}
-return(output;)
+int = 261;
+return(int;)

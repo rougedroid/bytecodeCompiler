@@ -111,6 +111,7 @@ typedef enum
   OP_CMP_LSR = 0x0035,      // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
   OP_CMP_GTR_JMP = 0x0036,  // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1>reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
   OP_CMP_LSR_JMP = 0x0037,  // OPCODE [REG1] [REG2] [JMP1] [JMP2] --> compares values. true if reg1<reg2. If true, it jumps toJMP1 pointer. If false it jumps to JMP2 pointer.
+  OP_HALT = 0x0038,
 
 } Opcodes;
 
@@ -152,6 +153,11 @@ uint16_t translate(ASTNode_t *rootNode)
   if (rootNode->NodeType == NODE_VALUE)
   {
     printf("WRITE_CONST_INT [%d] [%d] \n", output_reg, (rootNode->data).value);
+    int offset = output_stream->length;
+    uint16_t instruction_set[] = {WRITE_CONST_INT, output_reg, (rootNode->data).value};
+    uint16_t * write_ptr = output_stream->binstream + offset;
+    memcpy(write_ptr, instruction_set, sizeof(instruction_set));
+    output_stream->length+=3;
   }
   else if (rootNode->NodeType == NODE_VALUE_REG)
   {
@@ -817,7 +823,7 @@ void parse_statement()
           int offset = output_stream->length;
           uint16_t *write_ptr = output_stream->binstream + offset;
           memcpy(write_ptr, instruction_set, sizeof(instruction_set));
-          output_stream->length++;
+          output_stream->length+=2;
         }
         else
         {
@@ -944,6 +950,12 @@ void parse_program()
   if (strstr(cur_token->token, "}"))
   {
     return;
+  }
+  if (strstr(cur_token->token, "EOF")){
+    int offset = output_stream->length;
+    output_stream->binstream[offset] = OP_HALT;
+    output_stream->length++;
+    printf("OP_HALT\n");
   }
 }
 
