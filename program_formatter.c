@@ -36,20 +36,16 @@ char* formatProgramString(const char *rawContent) {
     if (rawContent == NULL) return NULL;
     
     int len = strlen(rawContent);
-    
-    // Allocate 3x the size + extra padding for " EOF\0"
+    // Allocate plenty of space
     char *output = malloc(len * 3 + 10);
-    if (output == NULL) {
-        printf("Memory allocation failed during formatting.\n");
-        return NULL;
-    }
+    if (output == NULL) return NULL;
 
     int j = 0; // Index for output string
 
     for (int i = 0; i < len; i++) {
         char current = rawContent[i];
 
-        // Handle whitespaces/newlines from the original file
+        // 1. Skip existing whitespaces/newlines, just use them to separate tokens
         if (isspace(current)) {
             if (j > 0 && output[j - 1] != ' ') {
                 output[j++] = ' ';
@@ -57,19 +53,32 @@ char* formatProgramString(const char *rawContent) {
             continue;
         }
 
-        // Space before character
-        if (j > 0 && output[j - 1] != ' ') {
+        // 2. If it's an alphanumeric character (letter or number), it's part of a word!
+        if (isalnum(current)) {
+            // If the previous character was a symbol, we need a space before this word
+            if (j > 0 && output[j - 1] != ' ' && !isalnum(rawContent[i - 1])) {
+                output[j++] = ' ';
+            }
+            
+            // Just copy the letter/digit directly (NO trailing space yet!)
+            output[j++] = current;
+        } 
+        // 3. Otherwise, it's a symbol (like ;, +, (, {, etc.)
+        else {
+            // Ensure there's a space before the symbol
+            if (j > 0 && output[j - 1] != ' ') {
+                output[j++] = ' ';
+            }
+
+            // Copy the symbol
+            output[j++] = current;
+
+            // Force a space AFTER the symbol
             output[j++] = ' ';
         }
-
-        // Insert character
-        output[j++] = current;
-
-        // Space after character
-        output[j++] = ' ';
     }
 
-    // Clean up any trailing space right before EOF to prevent double spaces
+    // Clean up any trailing space right before EOF
     if (j > 0 && output[j - 1] == ' ') {
         j--;
     }

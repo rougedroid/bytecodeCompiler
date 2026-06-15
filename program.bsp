@@ -1,0 +1,6 @@
+i = 0;
+input = 7;
+while ((i); < (input);){
+    i = i + 3;
+}
+return(i);

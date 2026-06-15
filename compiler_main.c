@@ -126,6 +126,9 @@ ASTNode_t *parse_expression(void);
 ASTNode_t *parse_term(void);
 ASTNode_t *parse_primary(void);
 void parse_program(void);
+char* readFile(const char *filename); 
+char* formatProgramString(const char *rawContent);
+int writeBinaryStream(const char *filename, const uint16_t *data, size_t count);
 
 void print_ast(ASTNode_t *, int);
 
@@ -245,12 +248,42 @@ token_array_t *tokenizer(char *input_text)
   return tokenarray;
 }
 
-char *load_code(char *program)
+int writeBinaryStream(const char *filename, const uint16_t *data, size_t count) {
+    // 1. Open the file in "wb" mode (Write Binary)
+    // The 'b' flag is crucial—it prevents the OS from changing newline characters!
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        printf("Error: Could not open file '%s' for writing.\n", filename);
+        return 0;
+    }
+
+    /* 2. Write the buffer to disk
+     * fwrite arguments:
+     * - data:   pointer to the start of your memory block
+     * - size:   size of a single element (sizeof(uint16_t) is 2 bytes)
+     * - count:  how many elements to write
+     * - file:   the file pointer
+     */
+    size_t written = fwrite(data, sizeof(uint16_t), count, file);
+
+    // 3. Close the file to flush the stream to disk
+    fclose(file);
+
+    // Verify if everything was written successfully
+    if (written != count) {
+        printf("Error: Only wrote %zu of %zu elements.\n", written, count);
+        return 0;
+    }
+
+    return 1;
+}
+/*
+void load_code(char *program)
 {
-  char *raw = readFile("program.txt");
+  char *raw = readFile("program.bsp");
   if (!raw) return;
 
-  char *program = formatProgramString(raw);
+  program = formatProgramString(raw);
   if (!program) {
     free(raw);
     return;
@@ -258,7 +291,30 @@ char *load_code(char *program)
   free(raw);
   
 
-  return program;
+  
+}
+*/
+char * load_code(){
+  printf("[DEBUG] Attempting to read program.bso...\n");
+
+  char *raw = readFile("program.bsp");
+  if (raw == NULL) {
+    printf("[DEBUG] ERROR: readFile returned NULL! Is the file in the right folder?\n");
+    return NULL; // or whatever your exit strategy is
+  }
+
+  printf("[DEBUG] Raw file read successfully. Length: %zu chars.\n", strlen(raw));
+  printf("[DEBUG] Raw content is: '%s'\n", raw);
+
+  char *program = formatProgramString(raw);
+  if (program == NULL) {
+      printf("[DEBUG] ERROR: formatProgramString returned NULL!\n");
+      free(raw);
+      return program;
+  }
+
+  printf("[DEBUG] SUCCESS! Formatted string is:\n%s\n", program);
+  return NULL;
 }
 
 bool is_valid_int(const char *str)
@@ -852,8 +908,9 @@ int main()
   output_stream->capacity = 10;
   output_stream->binstream = malloc(sizeof(uint16_t) * 10);
 
-  char *program = malloc(sizeof(char) * 500);
-  load_code(program);
+  char program[] = "i = 0 ; input = 7 ; while ( ( i ) ; < ( input ) ; ) { i = i + 3 ; } return ( i ) ; EOF";
+  //program = load_code();
+  printf("Code loaded : %s \n", program);
   tokenarray = tokenizer(program);
   classifier(tokenarray);
 
@@ -865,4 +922,6 @@ int main()
     printf("Variable no: [%d] \n", i + 1);
     printf("Name: [%s] :: REG: [%d] \n", (varpool->varptr + i)->name, (varpool->varptr + i)->reg);
   }
+
+  writeBinaryStream("bsp.out", output_stream->binstream, output_stream->length);
 }
