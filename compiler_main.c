@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include "program_formatter.h"
 
 #define punctuations ";:{}(),"
 #define a_operators "+-/+*="
@@ -246,7 +247,17 @@ token_array_t *tokenizer(char *input_text)
 
 char *load_code(char *program)
 {
-  strcpy(program, "int = 0 ; while ( ( int ) ; < ( 3 ) ; ) { int = int + 1 ; } return ( ( int ) ; ) EOF");
+  char *raw = readFile("program.txt");
+  if (!raw) return;
+
+  char *program = formatProgramString(raw);
+  if (!program) {
+    free(raw);
+    return;
+  }
+  free(raw);
+  
+
   return program;
 }
 
