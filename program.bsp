@@ -1,6 +1,9 @@
 int = 0;
-input = 7;
-while ((int); < (input);){
-    int = int + 3;
+input = 3;
+output = 0;
+if ((int);<(input+3);){
+    output = 2;
+}else {
+    output = 3;
 }
-return(int;)
+return(output;)
