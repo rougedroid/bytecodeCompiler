@@ -10,41 +10,6 @@
 #define keywords "if else return while" // 4 keywords. idc enough to deal with string arrays in C.
 #define c_operators "< > =="            // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false.
 #define l_operators "? ! | & "          // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false.
-// ? is just a joke not intended to be used really, unless you want to confuse a bunch of people by using non bool values in a logical operation
-// intended use:
-// if (?10) -> 10 isn't a logical operator so if (10) would give error. but ?10 gives true.
-// if (?) will give false cuz ) is not a value.
-// in future if you have a variable getting a value from a func, you can use ?var_from_func to see if it has a value or not.
-// i included it cuz it was mad funny. ;)
-
-/*
-Goal:
-Convert this program to bytecode and run it:
-
-i = 0;
-input = 7;
-if (input == 7){
-i = 1;
-}else {
-i = 0;
-}
-
-for (i<5){
-return(i);
-i = i + 1;
-}
-
-
-Program in test_prog
-
-*/
-// Rewrite code using while loop.
-
-// For data and variable assignment, we have address spaces:
-// 0               x0000 to 0xFFF0.
-// so, we use the last bunch to make sure the program doesn't overwrite itself.
-// Or...... we could write the program with a placeholder address, and then at the end, we calculate how long our program is, and assign address spaces outside this length
-// second method is preffered cuz we need to maintain variable list with registers anyways cuz variables will be called later on also.
 
 typedef enum
 {
@@ -180,16 +145,13 @@ uint16_t translate(ASTNode_t *rootNode)
   output_reg = last_reg - used_reg_rev;
   used_reg_rev += 2;
 
-  //  printf("Value type. output reg, used reg: [%d] [%d] [%d] \n", (rootNode->NodeType), output_reg, used_reg_rev) ;
 
   if (rootNode->NodeType == NODE_VALUE)
   {
-    // return (rootNode->data).value;
     printf("WRITE_CONST_INT [%d] [%d] \n", output_reg, (rootNode->data).value);
   }
   else if (rootNode->NodeType == NODE_VALUE_REG)
   {
-    //   printf("Register: [%d] \n", (rootNode->data).reg);
     output_reg = (rootNode->data).reg;
   }
   else if (rootNode->NodeType == NODE_OPERATOR)
@@ -284,12 +246,7 @@ token_array_t *tokenizer(char *input_text)
 
 char *load_code(char *program)
 {
-  // This is placeholder code. Put code to actually read from file.
-//  strcpy(program, "int = 0 ; input = 7 ; if ( ( input ) ; == ( 7 ) ; ) { int = 1 ; } else { int = 0 ; } EOF");
   strcpy(program, "int = 0 ; while ( ( int ) ; < ( 3 ) ; ) { int = int + 1 ; } return ( ( int ) ; ) EOF");
-  //  strcpy(program, "vari = 2 ; kali = vari + 3 ; EOF");
-  //    strcpy(program, "1/+/2/;");
-  //    There a a problem with variable names rn, if you use simple names like i then it will fail cuz i also checks out for keywords in the keyword list cuz we are using string matching not making a separate token for it.
   return program;
 }
 
@@ -301,7 +258,6 @@ bool is_valid_int(const char *str)
   }
 
   char *endptr;
-  // strtol(string_to_convert, pointer_to_end_of_conversion, base)
   long val = strtol(str, &endptr, 10);
 
   if (endptr == str)
@@ -328,7 +284,6 @@ bool is_valid_int(const char *str)
 
 token_array_t *classifier(token_array_t *tokenarray)
 {
-  // Basically the entire AST arch here and rest in process() func. written in a bunch of if statements.
   token_t *token_ptr;
   char token_text[10];
 
@@ -336,8 +291,6 @@ token_array_t *classifier(token_array_t *tokenarray)
   {
     token_ptr = tokenarray->tokenarray_ptr + i;
     strcpy(token_text, token_ptr->token);
-    //    printf("%d\n", i);
-    //  printf("IN for loop \n");
     if (strstr(keywords, token_text) != NULL)
     {
       token_ptr->type = KEYWORD;
@@ -392,8 +345,6 @@ ASTNode_t *parse_primary()
 
   ASTNode_t *outputNode = ASTNodePool + NodePool_Length;
   NodePool_Length++;
-//  printf("Primary called: %s \n", cur_token->token);
-  //printf("Primary called type: %d \n", cur_token->type);
 
   if (cur_token->type == VALUE)
   {
@@ -406,7 +357,6 @@ ASTNode_t *parse_primary()
   }
   else if (strstr("()", cur_token->token))
   {
-    // printf("Bracket detected \n");
     if (strstr("(", cur_token->token))
     {
       read_pointer++;
@@ -415,7 +365,6 @@ ASTNode_t *parse_primary()
       cur_token = tokenarray->tokenarray_ptr + read_pointer;
       if (strstr(")", cur_token->token))
       {
-        //      printf("Closed brac\n");
         read_pointer++;
         return outputNode;
       }
@@ -432,11 +381,8 @@ ASTNode_t *parse_primary()
   }
   else if (cur_token->type == VARIABLE)
   {
-  //  printf("Variable called: %s \n", cur_token->token);
-    // printf("Got call on var: %s \n", cur_token->token);
     char varname[10];
     strcpy(varname, cur_token->token);
-    //    printf("Got call on var: %s \n", varname);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
@@ -455,16 +401,11 @@ ASTNode_t *parse_primary()
     }
     else
     {
-//      printf("Returning output node for : %s \n", varname);
       ASTNode_t *oNode = malloc(sizeof(ASTNode_t));
       oNode->left = NULL;
       oNode->right = NULL;
       oNode->NodeType = NODE_VALUE_REG;
       (oNode->data).reg = (varpool->varptr + var_index)->reg;
-  //    printf("Printing onode for %s \n", varname);
-    //  printf("Onode address: %p \n", oNode);
-      //print_ast(oNode, 0);
-//      printf("Done \n");
       return oNode;
     }
   }
@@ -488,13 +429,10 @@ ASTNode_t *parse_term()
 
     if (strstr("/", (tokenarray->tokenarray_ptr + read_pointer - 1)->token))
     {
-      // printf("CODE DIVVV \n");
       (newNode->data).op = OPR_DIV;
     }
     else
     {
-      //    printf("%s\n", (tokenarray->tokenarray_ptr + read_pointer - 1)->token);
-      //      printf("CODE MULL\n");
       newNode->data.op = OPR_MUL;
     }
     newNode->right = parse_expression();
@@ -502,17 +440,12 @@ ASTNode_t *parse_term()
     nextnode = newNode;
   }
 
-  //printf("Onode ( in pterm address: %p \n", nextnode);
-//  print_ast(nextnode, 0);
-//  printf("Done \n");
   return nextnode;
 }
 ASTNode_t *parse_expression()
 {
 
-  // printf("Read pointer: [%d] Token: [%s] \n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   ASTNode_t *leftnode = parse_term();
-  // printf("Read pointer: [%d] Token: [%s] ]]\n", read_pointer, (tokenarray->tokenarray_ptr + read_pointer)->token);
   char *current_token = (tokenarray->tokenarray_ptr + read_pointer)->token;
   while (current_token != NULL && strcmp(current_token, ";") != 0 && strstr("+-", current_token))
   {
@@ -538,36 +471,27 @@ ASTNode_t *parse_expression()
   return leftnode;
 }
 
-// Format for if statements:
-// if ((a+b); == (c+d); ) {
-// /// stuffffff
-// }
 
 logical_result_t *parse_logic()
 {
   ASTNode_t *left_node = parse_expression();
-//  print_ast(left_node, 0);
   token_t *cur_token = tokenarray->tokenarray_ptr + read_pointer;
   logical_result_t *result = malloc(sizeof(logical_result_t));
   if (strstr(cur_token->token, ";"))
   {
-   // printf("Got left node \n");
     read_pointer++;
     cur_token = tokenarray->tokenarray_ptr + read_pointer;
     read_pointer++;
     if (strstr(cur_token->token, "=="))
     {
       result->Opcode = OP_CMP_JMP;
-     // printf("Got == op \n");
     }
     else if (strstr(cur_token->token, ">"))
     {
-     // printf("Got > op \n");
       result->Opcode = OP_CMP_GTR_JMP;
     }
     else if (strstr(cur_token->token, "<"))
     {
-     // printf("Got < op \n");
       result->Opcode = OP_CMP_LSR_JMP;
     }
   }
@@ -576,7 +500,6 @@ logical_result_t *parse_logic()
     printf("Expected ; After if ((..) \n");
   }
   ASTNode_t *right_node = parse_expression();
- // printf("Got right node \n");
   
   cur_token = tokenarray->tokenarray_ptr + read_pointer;
   if (strcmp(cur_token->token, ";")==0){
@@ -585,11 +508,7 @@ logical_result_t *parse_logic()
     printf("Expected ; but got: %s \n", cur_token->token);
   }
   result->reg_right = translate(right_node);
-//  printf("Got right translate \n");
-//  print_ast(left_node, 0);
-//  printf("AST Printed \n");
   result->reg_left = translate(left_node);
-//  printf("Left translate done \n");
   return result;
 }
 
@@ -599,11 +518,8 @@ void parse_statement()
   token_t *current_token = (tokenarray->tokenarray_ptr + read_pointer);
   if (current_token->type == VARIABLE)
   {
-    //    printf("In variavle \n");
-    //  printf("Got call on var*: %s \n", current_token->token);
     char name[10];
     strcpy(name, current_token->token);
-    //  printf("Got call on var*: %s \n", name);
     variable_t *new_var;
     read_pointer++;
     int var_index = -1;
@@ -619,7 +535,6 @@ void parse_statement()
 
     if (var_index == -1)
     {
-      //      printf("Creating new var: %s\n", name);
       if (varpool->length == varpool->capacity)
       {
         varpool->capacity *= 2;
@@ -630,7 +545,6 @@ void parse_statement()
       new_var->reg = last_reg - used_reg_rev;
       used_reg_rev++;
       varpool->length++;
-      //    printf("made variable \n");
     }
     else
     {
@@ -644,7 +558,6 @@ void parse_statement()
       ASTNode_t *var_val = ASTNodePool + NodePool_Length;
       NodePool_Length++;
       var_val = parse_expression();
-      //  printf("Calling Assignment translator \n");
       uint16_t res_reg = translate(var_val);
 
       printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
@@ -658,7 +571,6 @@ void parse_statement()
 
     if (strstr(current_token->token, "if"))
     {
-    //  printf("If statement start \n");
       logical_result_t *result;
       read_pointer++;
       uint16_t op;
@@ -669,11 +581,8 @@ void parse_statement()
       if (strstr(current_token->token, "("))
       {
         read_pointer++;
-    //    printf("Calling parse logic \n");
-        // i need parse logic to tell me which comparison op to use and what the two registers are to be compared.
         result = parse_logic();
         op = result->Opcode;
-      //  printf("Parse logic finished \n");
 
         current_token = tokenarray->tokenarray_ptr + read_pointer;
         if (strstr(current_token->token, ")"))
@@ -781,7 +690,6 @@ void parse_statement()
 
     }else if (strstr(current_token->token, "while"))
     {
-    //  printf("If statement start \n");
       logical_result_t *result;
       read_pointer++;
       uint16_t op;
@@ -792,11 +700,8 @@ void parse_statement()
       if (strstr(current_token->token, "("))
       {
         read_pointer++;
-    //    printf("Calling parse logic \n");
-        // i need parse logic to tell me which comparison op to use and what the two registers are to be compared.
         result = parse_logic();
         op = result->Opcode;
-      //  printf("Parse logic finished \n");
 
         current_token = tokenarray->tokenarray_ptr + read_pointer;
         if (strstr(current_token->token, ")"))
@@ -843,33 +748,6 @@ void parse_statement()
             {
               read_pointer++;
               current_token = tokenarray->tokenarray_ptr + read_pointer;
-              // if (strstr(current_token->token, "else"))
-              // {
-              //   read_pointer++;
-              //   current_token = tokenarray->tokenarray_ptr + read_pointer;
-              //   if (strstr(current_token->token, "{"))
-              //   {
-              //     read_pointer++;
-              //     initlen = rand_stream->length;
-              //     parse_program();     // this will also write out the code for + if condition.
-              //     rand_stream->length += 6; // assuming parse program length is 6*2 bytes.....
-              //     rand_stream->binstream[jmp_else_index] = rand_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-              //     printf("Changed jump (to jump the else blok after if ) 1 to %d bytes \n", rand_stream->length-initlen);
-              //     current_token = tokenarray->tokenarray_ptr + read_pointer;
-              //     if (strstr(current_token->token, "}"))
-              //     {
-              //       read_pointer++;
-              //       return;
-              //     }else {
-                    
-              //       printf("Expected '}' but got '%s' \n", current_token->token);
-              //     }
-                // }else {
-                //   printf("Expected '{' * but got '%s' \n", current_token->token);
-                // }
-              // }else {
-              //   printf("Expected 'else' but got '%s' \n", current_token->token);
-              // }
             }else {
               printf("Expected } but got %s \n", current_token->token);
             }
@@ -913,20 +791,17 @@ void print_ast(ASTNode_t *node, int level)
     printf("NULL Node \n");
     return;
   }
-  // Print indentation based on current tree depth
   for (int i = 0; i < level; i++)
   {
     printf("    "); // 4 spaces per depth level
   }
 
-  // Print node data depending on its type
   if (node->NodeType == NODE_VALUE)
   {
     printf("[VAL: %d]\n", node->data.value);
   }
   else if (node->NodeType == NODE_OPERATOR)
   {
-    // Mapping your operation enums to printable characters
     char op_char = '?';
     switch (node->data.op)
     {
@@ -950,7 +825,6 @@ void print_ast(ASTNode_t *node, int level)
     printf("Node type: %d \n", node->NodeType);
   }
 
-  // Recursively print children, stepping up the indentation level
   print_ast(node->left, level + 1);
   print_ast(node->right, level + 1);
 }
@@ -961,10 +835,6 @@ int main()
   varpool->length = 0;
   varpool->capacity = 2;
   varpool->varptr = malloc(sizeof(variable_t) * 2);
-  // Writing the test program in the form that will be loaded later. Note that the / separator is assigned for every place with a space or a \n character. I do not expect the user to use it. It will be added automatically when loaded by file loader.
-  // Also every semicolon and bracket is preceeded and followed by a / and a semicolon signals the end of a command.
-  // For the purposes of this demonstration only 2 variables are allowed initially atleast. input and i.
-  // EOF is added automatically at end of program.
   ASTNodePool = malloc(sizeof(ASTNode_t) * 4096);
   output_stream = malloc(sizeof(ByteStream_t));
   output_stream->length = 0;
@@ -975,17 +845,6 @@ int main()
   load_code(program);
   tokenarray = tokenizer(program);
   classifier(tokenarray);
-  /*
-  // For Debugging:
-  for (int i = 0; i < tokenarray->length; i++)
-  {
-    printf("token: %d : %s : %d \n", i, (tokenarray->tokenarray_ptr + i)->token, (tokenarray->tokenarray_ptr + i)->type);
-  } */
-  //  printf("Deepest Brac: %d \n", find_deepest_brac(tokenarray));
-  //  translate(parse_expression());
-  //  ASTNode_t *node_structure = parse_expression();
-  //  print_ast(node_structure, 0);
-  //  translate(node_structure);
 
   parse_program();
 
