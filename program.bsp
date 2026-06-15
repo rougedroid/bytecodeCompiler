@@ -1,6 +1,6 @@
-i = 0;
+int = 0;
 input = 7;
-while ((i); < (input);){
-    i = i + 3;
+while ((int); < (input);){
+    int = int + 3;
 }
-return(i);
+return(int;)

@@ -314,7 +314,7 @@ char * load_code(){
   }
 
   printf("[DEBUG] SUCCESS! Formatted string is:\n%s\n", program);
-  return NULL;
+  return program;
 }
 
 bool is_valid_int(const char *str)
@@ -908,8 +908,9 @@ int main()
   output_stream->capacity = 10;
   output_stream->binstream = malloc(sizeof(uint16_t) * 10);
 
-  char program[] = "i = 0 ; input = 7 ; while ( ( i ) ; < ( input ) ; ) { i = i + 3 ; } return ( i ) ; EOF";
-  //program = load_code();
+  //char program[] = "i = 0 ; input = 7 ; while ( ( i ) ; < ( input ) ; ) { i = i + 3 ; } return ( i ) ; EOF";
+  char * program;
+  program = load_code();
   printf("Code loaded : %s \n", program);
   tokenarray = tokenizer(program);
   classifier(tokenarray);
