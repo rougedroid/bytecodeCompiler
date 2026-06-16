@@ -32,6 +32,7 @@ char* readFile(const char *filename) {
     return buffer;
 }
 
+
 char* formatProgramString(const char *rawContent) {
     if (rawContent == NULL) return NULL;
     
@@ -45,7 +46,7 @@ char* formatProgramString(const char *rawContent) {
     for (int i = 0; i < len; i++) {
         char current = rawContent[i];
 
-        // 1. Skip existing whitespaces/newlines, just use them to separate tokens
+        // 1. Skip existing whitespaces/newlines
         if (isspace(current)) {
             if (j > 0 && output[j - 1] != ' ') {
                 output[j++] = ' ';
@@ -53,27 +54,47 @@ char* formatProgramString(const char *rawContent) {
             continue;
         }
 
-        // 2. If it's an alphanumeric character (letter or number), it's part of a word!
+        // 2. Alphanumeric characters (words/numbers)
         if (isalnum(current)) {
-            // If the previous character was a symbol, we need a space before this word
-            if (j > 0 && output[j - 1] != ' ' && !isalnum(rawContent[i - 1])) {
+            // Fixed safety check: look at output[j-1] rather than rawContent[i-1] 
+            // to safely know if the last written char was an alphanumeric.
+            if (j > 0 && output[j - 1] != ' ' && !isalnum(output[j - 1])) {
                 output[j++] = ' ';
             }
-            
-            // Just copy the letter/digit directly (NO trailing space yet!)
             output[j++] = current;
         } 
-        // 3. Otherwise, it's a symbol (like ;, +, (, {, etc.)
+        // 3. Symbols and Operators
         else {
             // Ensure there's a space before the symbol
             if (j > 0 && output[j - 1] != ' ') {
                 output[j++] = ' ';
             }
 
-            // Copy the symbol
-            output[j++] = current;
+            // Check for 2-character operators (==, !=, <=, >=, ++, --, &&, ||)
+            if (i + 1 < len) {
+                char next = rawContent[i + 1];
+                if ((current == '=' && next == '=') ||
+                    (current == '!' && next == '=') ||
+                    (current == '<' && next == '=') ||
+                    (current == '>' && next == '=') ||
+                    (current == '+' && next == '+') ||
+                    (current == '-' && next == '-') ||
+                    (current == '&' && next == '&') ||
+                    (current == '|' && next == '|')) {
+                    
+                    // Copy both characters
+                    output[j++] = current;
+                    output[j++] = next;
+                    i++; // Skip the next character in the loop
+                    
+                    // Force a space AFTER the 2-char operator
+                    output[j++] = ' ';
+                    continue; 
+                }
+            }
 
-            // Force a space AFTER the symbol
+            // Fallback for single-character symbols
+            output[j++] = current;
             output[j++] = ' ';
         }
     }
@@ -85,6 +106,6 @@ char* formatProgramString(const char *rawContent) {
 
     // Append the EOF marker cleanly
     strcpy(&output[j], " EOF");
-
+    
     return output;
 }

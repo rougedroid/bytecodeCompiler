@@ -11,6 +11,8 @@
 #define keywords "if else return while" // 4 keywords. idc enough to deal with string arrays in C.
 #define c_operators "< > =="            // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false.
 #define l_operators "? ! | & "          // !->NOT | -> OR & -> AND ? -> make true. Basically it will make the next token true. even if its not a boolean and was supposed to give value error. If the next token is not a value, then ? inserts a token saying false.
+// l_operators not supported in v1
+
 
 typedef enum
 {
@@ -139,6 +141,16 @@ var_pool_t *varpool;
 
 ByteStream_t *output_stream;
 
+void manage_stream(){
+  if ((output_stream->capacity - output_stream->length) <= 16) // setting 16 byte padding to prevent any large binary writes fucking it up
+  {
+    output_stream->capacity *= 2;
+    output_stream->binstream = realloc(output_stream->binstream, sizeof(uint16_t) * output_stream->capacity);
+  }
+  return;
+}
+
+
 uint16_t translate(ASTNode_t *rootNode)
 { //, ByteStream_t * outputstream){
 
@@ -170,12 +182,7 @@ uint16_t translate(ASTNode_t *rootNode)
     op = (rootNode->data).op;
     int offset;
     uint16_t *write_ptr;
-    if ((output_stream->capacity - output_stream->length) <= 8)
-    {
-      output_stream->capacity *= 2;
-      output_stream->binstream = realloc(output_stream->binstream, sizeof(uint16_t) * output_stream->capacity);
-    }
-
+    manage_stream();
     uint16_t instruction_set[6];
     switch (op)
     {
@@ -659,7 +666,7 @@ void parse_statement()
       NodePool_Length++;
       var_val = parse_expression();
       uint16_t res_reg = translate(var_val);
-
+      manage_stream();
       printf("OP_LOAD_REG [%d] [ %d] \n", res_reg, new_var->reg);
       uint16_t instruction_set[] = {OP_LOAD_REG, res_reg, new_var->reg};
       int offset = output_stream->length;
@@ -697,6 +704,7 @@ void parse_statement()
 
           current_token = tokenarray->tokenarray_ptr + read_pointer;
           jmpat = output_stream->length + 3;
+          manage_stream();
           switch (op)
           {
           case OP_CMP_JMP:
@@ -808,6 +816,7 @@ void parse_statement()
     {
       read_pointer++;
       current_token = tokenarray->tokenarray_ptr + read_pointer;
+      manage_stream();
       if (strstr(current_token->token, "("))
       {
         read_pointer++;
@@ -858,6 +867,7 @@ void parse_statement()
 
           current_token = tokenarray->tokenarray_ptr + read_pointer;
           jmpat = output_stream->length + 3;
+          manage_stream();
           switch (op)
           {
           case OP_CMP_JMP:
@@ -944,6 +954,7 @@ void parse_program()
 
   while (cur_token != NULL && strcmp(cur_token->token, "EOF") != 0 && strcmp(cur_token->token, "}") != 0)
   {
+    manage_stream();
     parse_statement();
     cur_token = tokenarray->tokenarray_ptr + read_pointer;
   }
@@ -1014,7 +1025,7 @@ int main()
   output_stream = malloc(sizeof(ByteStream_t));
   output_stream->length = 0;
   output_stream->capacity = 10;
-  output_stream->binstream = malloc(sizeof(uint16_t) * 100);
+  output_stream->binstream = malloc(sizeof(uint16_t) * 16);
 
   // char program[] = "i = 0 ; input = 7 ; while ( ( i ) ; < ( input ) ; ) { i = i + 3 ; } return ( i ) ; EOF";
   char *program;

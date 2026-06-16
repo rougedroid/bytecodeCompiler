@@ -6,12 +6,28 @@ A custom bytecode compiler and virtual machine implementation built from scratch
 
 ByteCode Compiler is an educational proof-of-concept system that combines:
 
-- **A simple imperative language** supporting variables, arithmetic, conditionals, and loops
+- **A simple imperative language** supporting variables, arithmetic, conditionals (if/else), loops (while), and return statements
 - **A custom ISA (Instruction Set Architecture)** with 19 opcodes designed for simplicity and clarity
 - **A recursive-descent compiler** that translates source programs into bytecode
 - **A flat address-space memory model** with reserved regions for special operations
+- **Dynamic memory allocation** for bytecode stream generation and variable storage
 
 The entire system is written in C using only the C standard library. No parser generators, regex engines, or external frameworks are used. The architecture was evolved iteratively through implementation, making this as much a documentation of problem-solving as it is a functional compiler.
+
+## Status
+
+**Compiler Features:**
+- ✅ Fully functional tokenizer and classifier
+- ✅ Recursive-descent parser with complete control flow support
+- ✅ Variable management with dynamic allocation
+- ✅ Arithmetic operations (binary +, -, *, /)
+- ✅ Comparison operations (<, >, ==)
+- ✅ Conditional statements (if/else)
+- ✅ Loop statements (while)
+- ✅ Return statements
+- ✅ Dynamic bytecode stream allocation
+- ✅ Memory issue fixes (buffer overflows and corruption resolved)
+- ⚠️ Memory leak cleanup not yet addressed
 
 ## Quick Start
 
@@ -27,10 +43,30 @@ gcc -std=c99 -o compiler_main compiler_main.c
 
 The compiler currently reads a hard-coded program from `load_code()` in the source. Example:
 ```
-int = 0 ; while ( ( int ) ; < ( 3 ) ; ) { int = int + 1 ; } return ( ( int ) ; ) EOF
+int = 261;
+input = 262;
+flag = 6969;
+random = 5;
+return(random;);
+if ((int); < (input);){
+    return(flag;);
+    random = 4;
+}else {
+    return(flag;);
+    random = 3;
+}
+return(random;)
+EOF
 ```
 
 Output is printed to stdout as debug bytecode instructions.
+
+## Documentation
+
+- **[SYNTAX.md](SYNTAX.md)** — Complete reference for the source language syntax, including examples and current limitations
+- **[COMPILER_IMPLEMENTATION.md](COMPILER_IMPLEMENTATION.md)** — Detailed architecture documentation, data structures, and implementation notes
+- **[ISA_Definition.md](ISA_Definition.md)** — Bytecode instruction set specification (19 opcodes, memory model, encoding format)
+- **[TODO.md](TODO.md)** — Known issues, feature requests, and future work
 
 ## Architecture Overview
 
