@@ -1,2 +1,14 @@
 int = 261;
-return(int;)
+input = 262;
+
+flag = 6969;
+random = 5;
+return(random;);
+if ((int); < (input);){
+    return(flag;);
+    random = 4;
+}else {
+    return(flag;);
+    random = 3;
+}
+return(random;)

@@ -751,8 +751,8 @@ void parse_statement()
             memcpy(write_ptr, instruction_set, sizeof(instruction_set));
 
             output_stream->length += 2;
-            output_stream->binstream[jmpat] = output_stream->length - jmpat; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-            printf("Changed (for going to else block) jump 1* to %d bytes \n", output_stream->length - jmpat);
+            output_stream->binstream[jmpat] = output_stream->length - initlen; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+            printf("Changed (for going to else block) jump 1* to %d bytes \n", output_stream->length - initlen);
             current_token = tokenarray->tokenarray_ptr + read_pointer;
             if (strstr(current_token->token, "}"))
             {
@@ -768,8 +768,8 @@ void parse_statement()
                   initlen = output_stream->length;
                   parse_program();                                                            // this will also write out the code for + if condition.
                   
-                  output_stream->binstream[jmp_else_index] = output_stream->length - jmp_else_index; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
-                  printf("Changed jump (to jump the else blok after if ) 1 to %d bytes \n", output_stream->length - jmp_else_index);
+                  output_stream->binstream[jmp_else_index] = output_stream->length - jmp_else_index -1; // changed the jump address for + if statement. Then, we write out the else part and then change the jump after if statement to jump that much...... ig it wasn't necessary to change order since i have to write out shit and come back to change anyways but its fine ig
+                  printf("Changed jump (to jump the else blok after if ) 1 to %d bytes \n", output_stream->length - jmp_else_index -1);
                   current_token = tokenarray->tokenarray_ptr + read_pointer;
                   if (strstr(current_token->token, "}"))
                   {
